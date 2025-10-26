@@ -16,6 +16,11 @@ const ProductShowcase = dynamic(
   { ssr: false }
 );
 
+const InteractiveGame = dynamic(
+  () => import('./interactive-game').then((mod) => ({ default: mod.InteractiveGame })),
+  { ssr: false }
+);
+
 export function ProjectCanvas({ slug }: ProjectCanvasProps) {
   switch (slug) {
     case 'animated-scene':
@@ -23,11 +28,7 @@ export function ProjectCanvas({ slug }: ProjectCanvasProps) {
     case 'product-showcase':
       return <ProductShowcase />;
     case 'interactive-game':
-      return (
-        <div className="w-full h-full flex items-center justify-center">
-          <p className="text-xl text-muted-foreground">Interactive Game - Coming Soon</p>
-        </div>
-      );
+      return <InteractiveGame />;
     default:
       return (
         <div className="w-full h-full flex items-center justify-center">

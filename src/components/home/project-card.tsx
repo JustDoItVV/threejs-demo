@@ -10,14 +10,24 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   return (
-    <Link href={`/projects/${project.slug}`} className="block group">
-      <Card className="overflow-hidden transition-all hover:shadow-lg hover:-translate-y-2">
-        <div className="relative w-full h-60 bg-muted flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">Coming Soon</p>
+    <Link href={`/projects/${project.slug}`} className="block group h-full">
+      <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:-translate-y-2 flex flex-col">
+        <div className="relative w-full h-60 bg-muted overflow-hidden flex-shrink-0">
+          {project.thumbnail ? (
+            <img
+              src={project.thumbnail}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">Coming Soon</p>
+            </div>
+          )}
         </div>
-        <CardContent className="p-6 space-y-3">
+        <CardContent className="p-6 space-y-3 flex-1 flex flex-col">
           <h3 className="text-2xl font-bold">{project.title}</h3>
-          <p className="text-muted-foreground leading-relaxed">{project.description}</p>
+          <p className="text-muted-foreground leading-relaxed flex-1">{project.description}</p>
           <div className="flex flex-wrap gap-2">
             {project.tags.map((tag) => (
               <Badge key={tag} variant="secondary">
