@@ -149,11 +149,7 @@ export function PhoneScreen({ embedded = false }: PhoneScreenProps) {
 
               {/* Camera viewfinder */}
               <div className="flex-1 relative overflow-hidden">
-                <img
-                  src="/models/iphone-14/wallpaper.png"
-                  alt="Camera view"
-                  className="w-full h-full object-cover"
-                />
+                <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
                 <div className="absolute inset-0 bg-black/20" />
               </div>
 
@@ -199,7 +195,7 @@ export function PhoneScreen({ embedded = false }: PhoneScreenProps) {
         {/* Phone screen */}
         <div
           className="w-full h-full bg-linear-to-br from-blue-400 to-purple-600 rounded-[2.5rem] overflow-hidden relative select-none"
-          style={{ userSelect: 'none', WebkitUserDrag: 'none' }}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}
         >
           {/* Status bar */}
           <div className="h-12 flex items-center justify-between px-6 text-white text-xs font-medium">

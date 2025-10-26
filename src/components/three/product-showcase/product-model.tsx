@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-import { Html, useGLTF } from '@react-three/drei';
+import { getAssetPath } from '@/ui/utils';
+import { useGLTF } from '@react-three/drei';
 
 import { MaterialSettings } from './index';
-import { PhoneScreen } from './phone-screen';
+import { PhoneScreenMesh } from './phone-screen-mesh';
 
 interface ProductModelProps {
   materialSettings: MaterialSettings;
@@ -13,7 +14,8 @@ interface ProductModelProps {
 
 export function ProductModel({ materialSettings, showScreenUI }: ProductModelProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF('/models/iphone-14/iPhone 14 pro.glb');
+  const modelPath = getAssetPath('/models/iphone-14/iPhone 14 pro.glb');
+  const { scene } = useGLTF(modelPath);
 
   useEffect(() => {
     if (!scene) return;
@@ -59,22 +61,14 @@ export function ProductModel({ materialSettings, showScreenUI }: ProductModelPro
   return (
     <group ref={groupRef} position={[0, 0, 0]} scale={2}>
       <primitive object={scene} />
-      {/* Interactive phone screen overlay */}
+      {/* Interactive phone screen as 3D mesh with canvas texture */}
       {showScreenUI && (
-        <Html
-          position={[0.05, 1.04, 0.11]}
-          rotation={[0, 0, 0]}
-          occlude={[groupRef]}
-          transform
-          distanceFactor={1}
-          zIndexRange={[0, 0]}
-        >
-          <PhoneScreen embedded />
-        </Html>
+        <PhoneScreenMesh position={[0.04, 1.04, 0.11]} rotation={[0, 0, 0]} scale={9.3} />
       )}
     </group>
   );
 }
 
 // Preload модели
-useGLTF.preload('/models/iphone-14/iPhone 14 pro.glb');
+const modelPath = getAssetPath('/models/iphone-14/iPhone 14 pro.glb');
+useGLTF.preload(modelPath);

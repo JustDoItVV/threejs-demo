@@ -1,8 +1,10 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Project } from '@/types';
 import { Badge } from '@/ui/badge';
 import { Card, CardContent } from '@/ui/card';
+import { getAssetPath } from '@/ui/utils';
 
 interface ProjectCardProps {
   project: Project;
@@ -14,10 +16,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:-translate-y-2 flex flex-col">
         <div className="relative w-full h-60 bg-muted overflow-hidden flex-shrink-0">
           {project.thumbnail ? (
-            <img
-              src={project.thumbnail}
+            <Image
+              src={getAssetPath(project.thumbnail)}
               alt={project.title}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
             />
           ) : (
             <div className="flex items-center justify-center h-full">
