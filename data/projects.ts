@@ -5,25 +5,25 @@ export const Projects: Project[] = [
     slug: 'animated-scene',
     title: 'Animated 3D Scene',
     description:
-      'Interactive 3D model with orbital controls, custom shaders, and particle effects. Features smooth animations and dynamic lighting.',
+      'Interactive TorusKnot with custom GLSL vertex and fragment shaders, 3000 animated particles with color gradients, and orbital camera controls. Features smooth animations and dynamic lighting.',
     thumbnail: '/projects-screens/3d-animation.png',
-    tags: ['Three.js', 'GLSL', 'Particles', 'Animation'],
+    tags: ['Three.js', 'GLSL', 'Particles', 'OrbitControls'],
   },
   {
     slug: 'product-showcase',
     title: '3D Product Showcase',
     description:
-      'Professional product viewer with zoom, rotate controls, and customizable materials. Perfect for e-commerce presentations.',
+      'iPhone 14 Pro model viewer with interactive screen UI, swipeable app icons, camera view, and customizable materials (color, metalness, roughness). Professional lighting setup with environment reflections.',
     thumbnail: '/projects-screens/product-showcase.png',
-    tags: ['Three.js', 'GLTF', 'Materials', 'Interactive'],
+    tags: ['Three.js', 'GLTF', 'Interactive UI', 'Materials'],
   },
   {
     slug: 'interactive-game',
     title: 'Froggy Road',
     description:
-      'Crossy Road inspired 3D game with procedural generation, collision detection, and post-processing effects. Help the frog cross infinite lanes!',
-    thumbnail: '',
-    tags: ['Three.js', 'Game', 'Post-processing', 'Procedural'],
+      'Crossy Road clone with isometric orthographic camera, procedural infinite lane generation, platform riding mechanics, and post-processing effects. Control with arrow keys or WASD, press R to restart or Esc to exit.',
+    thumbnail: '/projects-screens/froggy-road.png',
+    tags: ['Three.js', 'Game', 'Isometric', 'Procedural'],
   },
 ];
 

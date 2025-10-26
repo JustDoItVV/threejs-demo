@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import './globals.css';
 
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -17,12 +16,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export const metadata: Metadata = {
-  title: 'Three.js Portfolio | Interactive 3D Experiences',
-  description:
-    'Explore interactive Three.js projects showcasing 3D graphics, animations, and WebGL effects.',
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -31,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

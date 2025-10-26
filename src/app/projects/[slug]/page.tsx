@@ -3,11 +3,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { IoArrowBack } from 'react-icons/io5';
 
+import { ProjectCanvas } from '@/components/three/project-canvas';
 import { Projects } from '@/data/projects';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { getProjectBySlug } from '@/utils';
-import { ProjectCanvas } from '@/components/three/project-canvas';
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>;
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   }
 
   return {
-    title: `${project.title} | Three.js Portfolio`,
+    title: `${project.title} | Three.js Demo`,
     description: project.description,
   };
 }
