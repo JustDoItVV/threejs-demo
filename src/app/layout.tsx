@@ -3,7 +3,9 @@ import './globals.css';
 
 import { Geist, Geist_Mono } from 'next/font/google';
 
-import { Providers } from './providers';
+import { Footer } from '@/components/layout/footer';
+import { Navbar } from '@/components/layout/navbar';
+import { ThemeProvider } from '@/ui/theme-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -21,31 +23,22 @@ export const metadata: Metadata = {
     'Explore interactive Three.js projects showcasing 3D graphics, animations, and WebGL effects.',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var mode = localStorage.getItem('chakra-ui-color-mode');
-                  if (!mode) {
-                    mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  }
-                  document.documentElement.classList.add(mode);
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <Providers>{children}</Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar />
+          {children}
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

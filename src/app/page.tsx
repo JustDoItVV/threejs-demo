@@ -1,16 +1,11 @@
-import { Box, Container, Heading, Text } from '@chakra-ui/react';
+import { Hero } from '@/components/home/hero';
+import { ProjectGrid } from '@/components/home/project-grid';
 
 export default function Home() {
   return (
-    <Box minH="100vh" bg="bg.secondary">
-      <Container maxW="container.xl" py={16}>
-        <Heading as="h1" size="2xl" mb={4} color="text.primary">
-          Three.js Portfolio
-        </Heading>
-        <Text fontSize="xl" color="text.secondary">
-          Interactive 3D Experiences - Coming Soon
-        </Text>
-      </Container>
-    </Box>
+    <main className="flex-1">
+      <Hero />
+      <ProjectGrid />
+    </main>
   );
 }
