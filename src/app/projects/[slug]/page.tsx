@@ -7,6 +7,7 @@ import { Projects } from '@/data/projects';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { getProjectBySlug } from '@/utils';
+import { ProjectCanvas } from '@/components/three/project-canvas';
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>;
@@ -66,8 +67,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <p className="text-lg text-muted-foreground max-w-3xl">{project.description}</p>
           </div>
 
-          <div className="w-full h-[600px] bg-muted rounded-lg flex items-center justify-center">
-            <p className="text-xl text-muted-foreground">Three.js Canvas - Coming Soon</p>
+          <div className="w-full h-[600px] bg-muted rounded-lg overflow-hidden">
+            <ProjectCanvas slug={project.slug} />
           </div>
         </div>
       </div>
