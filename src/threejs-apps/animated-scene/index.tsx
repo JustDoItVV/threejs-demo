@@ -2,7 +2,7 @@
 
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 
-import { CanvasWrapper } from '../canvas-wrapper';
+import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { AnimatedTorus } from './animated-torus';
 import { ControlsPanel } from './controls-panel';
 import { Particles } from './particles';

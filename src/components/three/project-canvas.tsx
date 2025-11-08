@@ -2,6 +2,8 @@
 
 import dynamic from 'next/dynamic';
 
+import { ErrorBoundary } from '../error-boundary';
+
 interface ProjectCanvasProps {
   slug: string;
 }
@@ -16,33 +18,40 @@ function LoadingCanvas() {
 }
 
 const AnimatedScene = dynamic(
-  () => import('./animated-scene').then((mod) => ({ default: mod.AnimatedScene })),
+  () => import('../../threejs-apps/animated-scene').then((mod) => ({ default: mod.AnimatedScene })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
 const ProductShowcase = dynamic(
-  () => import('./product-showcase').then((mod) => ({ default: mod.ProductShowcase })),
+  () =>
+    import('../../threejs-apps/product-showcase').then((mod) => ({ default: mod.ProductShowcase })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
 const InteractiveGame = dynamic(
-  () => import('./interactive-game').then((mod) => ({ default: mod.InteractiveGame })),
+  () => import('../../threejs-apps/froggy-road').then((mod) => ({ default: mod.InteractiveGame })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
 export function ProjectCanvas({ slug }: ProjectCanvasProps) {
-  switch (slug) {
-    case 'animated-scene':
-      return <AnimatedScene />;
-    case 'product-showcase':
-      return <ProductShowcase />;
-    case 'interactive-game':
-      return <InteractiveGame />;
-    default:
-      return (
-        <div className="w-full h-full flex items-center justify-center">
-          <p className="text-xl text-muted-foreground">Three.js Canvas - Coming Soon</p>
-        </div>
-      );
-  }
+  return (
+    <ErrorBoundary>
+      {(() => {
+        switch (slug) {
+          case 'animated-scene':
+            return <AnimatedScene />;
+          case 'product-showcase':
+            return <ProductShowcase />;
+          case 'froggy-road':
+            return <InteractiveGame />;
+          default:
+            return (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-xl text-muted-foreground">Three.js Canvas - Coming Soon</p>
+              </div>
+            );
+        }
+      })()}
+    </ErrorBoundary>
+  );
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { PerspectiveCamera } from '@react-three/drei';
 
-import { CanvasWrapper } from '../canvas-wrapper';
+import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { CameraControls } from './camera-controls';
 import { Environment } from './environment';
 import { MaterialControls } from './material-controls';

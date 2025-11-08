@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { OrthographicCamera } from '@react-three/drei';
 
-import { CanvasWrapper } from '../canvas-wrapper';
+import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { ControlsPanel } from './controls-panel';
 import { GameScene } from './game-scene';
 import { GameUI } from './game-ui';
