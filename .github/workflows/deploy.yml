@@ -1,19 +1,32 @@
-name: Three.js Portfolio CI/CD
+name: Deploy to Stage
+
 on:
   push:
-    branches: ['develop', 'master', 'main']
+    branches: ['master', 'main']
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
   build-and-push:
     name: Build and push Docker image to GHCR
     runs-on: ubuntu-latest
+    environment: stage
     permissions:
       contents: read
       packages: write
+    outputs:
+      repo_owner_lc: ${{ steps.lowercase.outputs.repo_owner_lc }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Convert repository owner to lowercase
+        id: lowercase
+        run: |
+          echo "repo_owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -21,18 +34,9 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=sha,prefix=,format=long
-            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -40,163 +44,119 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BASE_PATH=${{ vars.BASE_PATH }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner_lc }}/threejs-demo:stage-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner_lc }}/threejs-demo:stage-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy to server with rolling update
+    name: Deploy to Stage server
     runs-on: ubuntu-latest
     needs: build-and-push
+    environment: stage
 
     steps:
-      - name: Rolling deployment on remote server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -euxo pipefail
+      - uses: actions/checkout@v4
 
-            mkdir -p ${{ vars.PROJECT_FOLDER }}
-            cd ${{ vars.PROJECT_FOLDER }}
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGE_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ vars.STAGE_SERVER_HOST }} >> ~/.ssh/known_hosts
 
-            REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+      - name: Create deployment directory on server
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            mkdir -p ${{ vars.STAGE_DEPLOY_PATH }}
+          EOF
 
-            echo "Очистка остановленных контейнеров..."
-            ORPHANED=$(docker ps -a --filter "name=threejs-demo" --filter "status=exited" --format "{{.ID}}" || echo "")
-            if [ -n "$ORPHANED" ]; then
-              echo "Удаление остановленных контейнеров: $ORPHANED"
-              echo "$ORPHANED" | xargs -r docker rm
-            fi
+      - name: Copy docker-compose file to server
+        run: |
+          scp -i ~/.ssh/deploy_key docker-compose.stage.yml \
+            ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }}:${{ vars.STAGE_DEPLOY_PATH }}/
 
-            RUNNING_COUNT=$(docker ps --filter "name=threejs-demo" --filter "status=running" --format "{{.ID}}" | wc -l)
-            if [ "$RUNNING_COUNT" -gt 1 ]; then
-              echo "Найдено $RUNNING_COUNT запущенных контейнеров, оставляем только 1..."
-              docker ps --filter "name=threejs-demo" --filter "status=running" --format "{{.ID}}" | tail -n +2 | xargs -r docker stop
-              docker ps -a --filter "name=threejs-demo" --filter "status=exited" --format "{{.ID}}" | xargs -r docker rm
-            fi
+      - name: Create .env file on server
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            cat > ${{ vars.STAGE_DEPLOY_PATH }}/.env << 'ENVEOF'
+          REGISTRY=${{ env.REGISTRY }}
+          REPO_OWNER=${{ needs.build-and-push.outputs.repo_owner_lc }}
+          IMAGE_TAG=stage-${{ github.sha }}
+          STAGE_DOMAIN=${{ vars.STAGE_DOMAIN }}
+          BASE_PATH=${{ vars.BASE_PATH }}
+          ENVEOF
+          EOF
 
-            if [ -f .prod.env ]; then
-              cp .prod.env .prod.env.backup
-            fi
+      - name: Login to GHCR on server
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          EOF
 
-            touch .prod.env
-            chmod 600 .prod.env
+      - name: Pull Docker image
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ vars.STAGE_DEPLOY_PATH }}
+            docker compose -f docker-compose.stage.yml --env-file .env pull
+          EOF
 
-            cat > .prod.env << EOF
-            ENVIRONMENT=${{ vars.ENVIRONMENT }}
-            HOST=${{ vars.HOST }}
-            PORT=${{ vars.PORT }}
-            VIRTUAL_PATH=${{ vars.VIRTUAL_PATH }}
-            IMAGE_TAG=${{ github.sha }}
-            EOF
+      - name: Deploy application
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ vars.STAGE_DEPLOY_PATH }}
+            docker compose -f docker-compose.stage.yml --env-file .env up -d
+          EOF
 
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Wait for service to start
+        run: sleep 20
 
-            echo "Загрузка образа из GHCR: ghcr.io/${REPO_LC}:${{ github.sha }}"
-            docker pull ghcr.io/${REPO_LC}:${{ github.sha }}
+      - name: Health check with auto-rollback
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ vars.STAGE_DEPLOY_PATH }}
 
-            docker tag ghcr.io/${REPO_LC}:${{ github.sha }} threejs-demo:${{ github.sha }}
+            # Health check function
+            check_health() {
+              curl -k -f https://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
+              curl -f http://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
+              echo "failed"
+            }
 
-            OLD_CONTAINERS=$(docker ps --filter "name=threejs-demo" --filter "status=running" --format "{{.ID}}" || echo "")
-            if [ -n "$OLD_CONTAINERS" ]; then
-              echo "Найдены старые контейнеры: $OLD_CONTAINERS"
-            else
-              echo "Старых контейнеров не найдено (первый деплой)"
-            fi
+            # Try health check
+            HEALTH_RESULT=$(check_health)
 
-            echo "Запуск нового контейнера..."
-            NEW_CONTAINER=$(docker run -d \
-              --name "threejs-demo-${{ github.sha }}" \
-              --restart always \
-              --expose ${{ vars.PORT }} \
-              --env-file ./.prod.env \
-              -e VIRTUAL_HOST=${{ vars.HOST }} \
-              -e VIRTUAL_PORT=${{ vars.PORT }} \
-              -e VIRTUAL_PATH=${{ vars.VIRTUAL_PATH }} \
-              --network gprm_gprm-network \
-              --stop-timeout 30 \
-              threejs-demo:${{ github.sha }})
-
-            echo "Новый контейнер запущен: $NEW_CONTAINER"
-
-            echo "Ожидание прохождения health checks..."
-            MAX_ATTEMPTS=30
-            ATTEMPT=0
-            NEW_CONTAINER_HEALTHY=false
-
-            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-              ATTEMPT=$((ATTEMPT + 1))
-              echo "Попытка health check $ATTEMPT/$MAX_ATTEMPTS..."
-
-              CONTAINER_RUNNING=$(docker ps --filter "id=$NEW_CONTAINER" --format "{{.ID}}" || echo "")
-
-              if [ -n "$CONTAINER_RUNNING" ]; then
-                HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$NEW_CONTAINER" 2>/dev/null || echo "")
-
-                if [ -z "$HEALTH_STATUS" ] || [ "$HEALTH_STATUS" = "none" ]; then
-                  CONTAINER_STATUS=$(docker inspect --format='{{.State.Status}}' "$NEW_CONTAINER")
-                  echo "Статус контейнера: $CONTAINER_STATUS (healthcheck недоступен, проверяем напрямую)"
-
-                  if [ "$CONTAINER_STATUS" = "running" ]; then
-                    if docker exec "$NEW_CONTAINER" wget -q -O- http://localhost:${{ vars.PORT }}/threejs-demo/api/health > /dev/null 2>&1; then
-                      HEALTH_STATUS="healthy"
-                    else
-                      HEALTH_STATUS="starting"
-                    fi
-                  else
-                    HEALTH_STATUS="unhealthy"
-                  fi
-                fi
-
-                echo "Health статус контейнера $NEW_CONTAINER: $HEALTH_STATUS"
-
-                if [ "$HEALTH_STATUS" = "healthy" ]; then
-                  NEW_CONTAINER_HEALTHY=true
-                  echo "Новый контейнер здоров!"
-                  break
-                fi
-              fi
-              sleep 5
-            done
-
-            if [ "$NEW_CONTAINER_HEALTHY" = false ]; then
-              echo "ОШИБКА: Новый контейнер не прошёл health checks. Откат..."
-
-              [ -n "$NEW_CONTAINER" ] && docker stop "$NEW_CONTAINER" && docker rm "$NEW_CONTAINER" || true
-
-              docker rmi "threejs-demo:${{ github.sha }}" || true
-
-              [ -f .prod.env.backup ] && mv .prod.env.backup .prod.env
-              rm -f .prod.env
-              rm -f .prod.env.backup
-
-              echo "Откат завершён. Старый контейнер продолжает работать."
+            if [[ "$HEALTH_RESULT" != *"ok"* ]]; then
+              echo "❌ Health check failed! Result: $HEALTH_RESULT"
+              echo "Container logs:"
+              docker logs threejs-demo-stage --tail 50
               exit 1
-            fi
-
-            if [ -n "$OLD_CONTAINERS" ]; then
-              echo "Остановка старых контейнеров..."
-              for OLD_ID in $OLD_CONTAINERS; do
-                echo "Остановка контейнера: $OLD_ID"
-                docker stop -t 30 "$OLD_ID" || echo "Не удалось остановить $OLD_ID, продолжаем..."
-                docker rm "$OLD_ID" || echo "Не удалось удалить $OLD_ID, продолжаем..."
-              done
-              echo "Все старые контейнеры остановлены и удалены."
             else
-              echo "Нет старых контейнеров для остановки."
+              echo "✅ Health check passed"
             fi
+          EOF
 
-            rm -f .prod.env.backup
-            rm -f .prod.env
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            echo "=== Docker container status ==="
+            docker ps --filter "name=threejs-demo-stage" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-            echo "Очистка старых локальных образов (оставляем последние 3)..."
-            docker images --format "{{.Repository}}:{{.Tag}}" | grep '^threejs-demo:' | grep -v "threejs-demo:${{ github.sha }}" | tail -n +4 | xargs -r docker rmi || true
+            echo -e "\n=== Health check result ==="
+            curl -k -s https://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health || echo "Failed"
+          EOF
 
-            echo "Очистка старых GHCR образов (сохраняем локальный кэш)..."
-            docker images --format "{{.Repository}}:{{.Tag}}" | grep "^ghcr.io/${REPO_LC}:" | grep -v "${{ github.sha }}" | tail -n +4 | xargs -r docker rmi || true
+      - name: Cleanup old Docker images
+        if: success()
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+            echo "=== Removing old images ==="
+            docker images ${{ env.REGISTRY }}/${{ needs.build-and-push.outputs.repo_owner_lc }}/threejs-demo --format "{{.ID}}" | tail -n +3 | xargs -r docker rmi -f 2>/dev/null || true
+          EOF
 
-            echo "Rolling deployment успешно завершён!"
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
