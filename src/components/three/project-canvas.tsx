@@ -33,6 +33,11 @@ const InteractiveGame = dynamic(
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
+const RogueGame = dynamic(
+  () => import('../../threejs-apps/rogue').then((mod) => ({ default: mod.RogueGame })),
+  { ssr: false, loading: () => <LoadingCanvas /> }
+);
+
 export function ProjectCanvas({ slug }: ProjectCanvasProps) {
   return (
     <ErrorBoundary>
@@ -44,6 +49,8 @@ export function ProjectCanvas({ slug }: ProjectCanvasProps) {
             return <ProductShowcase />;
           case 'froggy-road':
             return <InteractiveGame />;
+          case 'rogue':
+            return <RogueGame />;
           default:
             return (
               <div className="w-full h-full flex items-center justify-center">
