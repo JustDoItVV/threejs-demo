@@ -1,86 +1,44 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
-import { Item } from '../../core/types/game-types';
+import { getItemSprite } from '../../config/assets';
+import { Item } from '../../types/game-types';
+import { loadTexture } from '../../utils/texture-loader';
 
 interface ItemSpriteProps {
   item: Item;
 }
 
-function getItemColor(item: Item): string {
-  if (item.type === 'treasure') return '#ffd700';
-  if (item.type === 'food') return '#ff6347';
-  if (item.type === 'elixir') return '#9370db';
-  if (item.type === 'scroll') return '#4682b4';
-  if (item.type === 'weapon') return '#c0c0c0';
-  return '#ffffff';
-}
-
-function drawItemIcon(ctx: CanvasRenderingContext2D, item: Item, color: string) {
-  ctx.fillStyle = color;
-
-  if (item.type === 'treasure') {
-    ctx.beginPath();
-    ctx.moveTo(64, 30);
-    ctx.lineTo(85, 50);
-    ctx.lineTo(75, 95);
-    ctx.lineTo(53, 95);
-    ctx.lineTo(43, 50);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(54, 55, 20, 8);
-  } else if (item.type === 'food') {
-    ctx.beginPath();
-    ctx.arc(64, 64, 40, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(60, 25, 8, 15);
-  } else if (item.type === 'elixir') {
-    ctx.fillRect(50, 40, 28, 50);
-    ctx.beginPath();
-    ctx.arc(64, 40, 14, Math.PI, 0);
-    ctx.fill();
-  } else if (item.type === 'scroll') {
-    ctx.fillRect(35, 45, 58, 38);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(40, 52, 48, 4);
-    ctx.fillRect(40, 62, 48, 4);
-    ctx.fillRect(40, 72, 48, 4);
-  } else if (item.type === 'weapon') {
-    ctx.fillRect(60, 30, 8, 60);
-    ctx.fillRect(50, 35, 28, 8);
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(58, 75, 12, 15);
-  } else {
-    ctx.fillRect(50, 50, 28, 28);
-  }
-}
-
 export function ItemSprite({ item }: ItemSpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
 
-  useEffect(() => {
-    if (spriteRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
-      const ctx = canvas.getContext('2d');
-
-      if (ctx) {
-        const color = getItemColor(item);
-        drawItemIcon(ctx, item, color);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        spriteRef.current.material.map = texture;
-        spriteRef.current.material.needsUpdate = true;
-      }
+  // Use subtype or name to determine sprite variant
+  // For example, if item.subtype is "gold_coins", we can parse it
+  // For now, use a simple hash based on item name for variety
+  const variant = useMemo(() => {
+    if (!item.name) return 0;
+    let hash = 0;
+    for (let i = 0; i < item.name.length; i++) {
+      hash = (hash << 5) - hash + item.name.charCodeAt(i);
+      hash = hash & hash;
     }
-  }, [item]);
+    return Math.abs(hash);
+  }, [item.name]);
+
+  const texturePath = useMemo(() => getItemSprite(item.type, variant), [item.type, variant]);
+
+  const texture = useMemo(() => {
+    try {
+      const isAnimated = texturePath.includes('Chest');
+      const totalFrames = isAnimated ? 4 : 1;
+      return loadTexture(texturePath, 0, totalFrames);
+    } catch (error) {
+      console.error(`[ItemSprite] Failed to load texture for ${item.type}:`, error);
+      return null;
+    }
+  }, [texturePath, item.type]);
 
   if (!item?.position?.room) {
     return null;
@@ -92,14 +50,19 @@ export function ItemSprite({ item }: ItemSpriteProps) {
   const worldZ = 0.3;
   const visible = room.isSeen;
 
+  if (!texture) {
+    console.warn(`[ItemSprite] Texture not loaded for ${item.type}, skipping render`);
+    return null;
+  }
+
   return (
     <sprite
       ref={spriteRef}
       position={[worldX, worldY, worldZ]}
-      scale={[0.7, 0.7, 0.7]}
+      scale={[0.9, 0.9, 0.9]}
       visible={visible}
     >
-      <spriteMaterial attach="material" transparent />
+      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
     </sprite>
   );
 }

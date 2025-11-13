@@ -1,22 +1,44 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 import { Button } from '@/ui/button';
 
-import { useRogueStore } from '../../store/rogue-store';
+import { selectCharacter, useRogueStore } from '../../store/rogue-store';
+import { Item } from '../../types/game-types';
+import { getItemSpritePath } from '../../utils/utils';
 
 export function BackpackModal() {
   const [filter, setFilter] = useState<string>('all');
-  const character = useRogueStore((state) => state.character);
+  const character = useRogueStore(selectCharacter);
   const makeTurn = useRogueStore((state) => state.makeTurn);
   const setGameState = useRogueStore((state) => state.setGameState);
 
-  const items = character?.backpack.items || [];
-  const filteredItems =
-    filter === 'all' ? items : items.filter((item) => item && item.type === filter);
-  const handleUseItem = (itemIndex: number) => {
-    makeTurn(`${itemIndex + 1}`);
+  const items = character?.backpack?.items || [];
+
+  // Create array of items with their original indices for filtering
+  // @ts-expect-error -- tmp
+  const itemsWithIndices = items.map((item, idx) => ({ item, originalIndex: idx }));
+  const filteredItems = (
+    filter === 'all'
+      ? itemsWithIndices
+      : // @ts-expect-error -- tmp
+        itemsWithIndices.filter(({ item }) => item && item.type === filter)
+  ) as { originalIndex: number; item: Item }[];
+
+  const handleUseItem = (originalIndex: number) => {
+    // Use original backpack index (1-based) for game logic
+    makeTurn(`${originalIndex + 1}`);
+    // Close backpack after using item
+    setGameState('game');
+  };
+
+  const handleDropItem = (originalIndex: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering Use action
+    // Drop item using 'd' prefix + index (1-based)
+    makeTurn(`d${originalIndex + 1}`);
+    // Keep backpack open to show updated inventory
   };
 
   return (
@@ -68,10 +90,13 @@ export function BackpackModal() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {filteredItems.map((item, idx) => {
+          {filteredItems.map(({ item, originalIndex }) => {
             if (!item) {
               return (
-                <div key={idx} className="bg-gray-800/50 rounded p-3 border border-gray-700">
+                <div
+                  key={originalIndex}
+                  className="bg-gray-800/50 rounded p-3 border border-gray-700"
+                >
                   <div className="text-center text-gray-600 text-sm">Empty Slot</div>
                 </div>
               );
@@ -88,28 +113,68 @@ export function BackpackModal() {
                 ? 'text-blue-400'
                 : 'text-yellow-400';
 
+            // Get item sprite path using hash-based variant
+            const itemSpritePath = getItemSpritePath(item);
+
             return (
               <div
-                key={idx}
-                className="bg-gray-800/80 rounded p-3 border border-gray-600 hover:border-yellow-500 cursor-pointer transition"
-                onClick={() => handleUseItem(idx)}
+                key={originalIndex}
+                className="bg-gray-800/80 rounded p-3 border border-gray-600 hover:border-yellow-500 transition flex flex-col gap-2"
               >
-                <div className="flex flex-col gap-1">
-                  <div className={`font-bold capitalize ${typeColor}`}>
-                    {item.subtype || item.type}
+                <div className="flex gap-2">
+                  {/* Item Sprite Icon */}
+                  {itemSpritePath && (
+                    <div className="shrink-0 w-12 h-12 bg-gray-900/50 rounded flex items-center justify-center">
+                      <Image
+                        src={itemSpritePath}
+                        alt={item.subtype || item.type}
+                        className="max-w-full max-h-full object-contain pixelated"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Item Info */}
+                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                    <div className={`font-bold capitalize text-sm ${typeColor} truncate`}>
+                      {item.subtype || item.type}
+                    </div>
+                    <div className="text-xs text-gray-400 capitalize">Type: {item.type}</div>
+                    <div className="flex flex-wrap gap-1">
+                      {item.strengthUp && (
+                        <div className="text-xs text-orange-400">+{item.strengthUp} STR</div>
+                      )}
+                      {item.dexterityUp && (
+                        <div className="text-xs text-blue-400">+{item.dexterityUp} DEX</div>
+                      )}
+                      {item.healthUp && (
+                        <div className="text-xs text-red-400">+{item.healthUp} HP</div>
+                      )}
+                      {item.maxHealthUp && (
+                        <div className="text-xs text-red-400">+{item.maxHealthUp} Max HP</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 capitalize">Type: {item.type}</div>
-                  {item.strengthUp && (
-                    <div className="text-xs text-orange-400">+{item.strengthUp} STR</div>
-                  )}
-                  {item.dexterityUp && (
-                    <div className="text-xs text-blue-400">+{item.dexterityUp} DEX</div>
-                  )}
-                  {item.healthUp && <div className="text-xs text-red-400">+{item.healthUp} HP</div>}
-                  {item.maxHealthUp && (
-                    <div className="text-xs text-red-400">+{item.maxHealthUp} Max HP</div>
-                  )}
-                  <div className="text-xs text-yellow-400 mt-1">Press {idx + 1} to use</div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => handleUseItem(originalIndex)}
+                    className="flex-1 h-7 text-xs bg-green-700 hover:bg-green-600"
+                  >
+                    Use ({originalIndex + 1})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => handleDropItem(originalIndex, e)}
+                    className="flex-1 h-7 text-xs border-red-600 text-red-400 hover:bg-red-900/30"
+                  >
+                    Drop (d{originalIndex + 1})
+                  </Button>
                 </div>
               </div>
             );

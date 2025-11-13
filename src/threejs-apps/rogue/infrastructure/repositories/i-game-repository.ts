@@ -1,8 +1,8 @@
-import { GameSession, HighScoreEntry, SavedGameSession } from '../../core/types/game-types';
+import { GameSession, HighScoreEntry, SavedGameSession } from '../../types/game-types';
 
 /**
  * Repository interface for game persistence
- * Allows switching between LocalStorage, IndexedDB, or WASM SQLite
+ * Allows switching between Memory, IndexedDB, or WASM SQLite
  */
 export interface IGameRepository {
   // Session management

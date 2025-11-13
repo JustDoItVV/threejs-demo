@@ -3,249 +3,397 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-// Bridge to existing class-based logic (temporary)
-import AppController from '../core/controller/app.controller.js';
-import { IGameRepository } from '../infrastructure/repositories/i-game-repository';
-import { LocalStorageRepository } from '../infrastructure/repositories/local-storage-repository';
+// Core model (in-memory storage with business logic)
+import AppModel from '../core/controller/app.model';
+import Datalayer from '../infrastructure/repositories/datalayer';
 
-import type {
-  GameState,
-  GameSession,
-  Room,
-  Corridor,
-  Character,
-  Enemy,
-  Item,
-  GameStatistics,
-} from '../core/types/game-types';
+import type { GameState } from '../types/game-types';
+
+/**
+ * Architecture:
+ *
+ * 1. Core Model (AppModel + GameSession + entities)
+ *    - Single source of truth for game state
+ *    - Contains all business logic
+ *    - Can be swapped for DB/IndexedDB/FileDB
+ *
+ * 2. Zustand Store
+ *    - UI state and rendering data
+ *    - Holds references to core entities (not copies!)
+ *    - Triggers React re-renders
+ *
+ * 3. Reducers (actions in store)
+ *    - Call core model methods first
+ *    - Then update zustand with references from core
+ *    - Ensures single source of truth
+ */
+
+interface DebugInfo {
+  characterPos: { x: number; y: number } | null;
+  cameraPos: { x: number; y: number; z: number } | null;
+  roomInfo: {
+    fieldX: number;
+    fieldY: number;
+    sizeX: number;
+    sizeY: number;
+  } | null;
+  entityCount: {
+    rooms: number;
+    enemies: number;
+    items: number;
+    corridors: number;
+  };
+}
 
 interface RogueGameStore {
-  // Game State
+  // ===== Core Model (single source of truth) =====
+  model: AppModel | null;
+  datalayer: typeof Datalayer.prototype | null;
+
+  // ===== UI State (derived from core, triggers re-renders) =====
+  // We store a counter to force re-renders when core state changes
+  renderTrigger: number;
+
+  // Game state for UI conditionals
   gameState: GameState;
-  needsRender: number;
 
-  // Level Data
-  levelNumber: number;
-  rooms: Room[];
-  corridors: Corridor[];
-  door: Item | null;
-  items: Item[];
-  enemies: Enemy[];
+  // ===== Debug & Camera State =====
+  debugInfo: DebugInfo;
+  cameraZoom: number;
+  showMarkers: boolean;
+  disableFog: boolean;
+  godMode: boolean;
 
-  // Character Data
-  character: Character;
+  // ===== Actions (Reducers) =====
+  // Initialize the model
+  initialize: () => void;
 
-  // UI State
-  logMessages: string[];
-  backpackItems: Item[];
-  statistics: GameStatistics;
-  win: boolean | null;
-
-  // Legacy bridge (will be removed after full migration)
-  _controller: AppController | null;
-  _repository: IGameRepository;
-
-  // Actions
-  initController: () => void;
-  setGameState: (state: GameState) => void;
+  // Game actions
   startGame: () => void;
   makeTurn: (input: string) => void;
   restart: () => void;
-  forceRender: () => void;
+  setGameState: (state: GameState) => void;
 
-  // Persistence actions
+  // Persistence
   saveGame: () => Promise<void>;
   loadGame: () => Promise<void>;
 
-  // Internal sync (bridge between old classes and Zustand)
-  _syncFromController: () => void;
+  // Debug actions
+  setDebugInfo: (info: DebugInfo) => void;
+  setCameraZoom: (zoom: number) => void;
+  toggleMarkers: () => void;
+  toggleFog: () => void;
+  toggleGodMode: () => void;
+
+  // Internal: trigger re-render after core state changes
+  _triggerRender: () => void;
 }
 
 export const useRogueStore = create<RogueGameStore>()(
   devtools(
     (set, get) => ({
-      // Initial state
+      // ===== Initial State =====
+      model: null,
+      datalayer: null,
+      renderTrigger: 0,
       gameState: 'start',
-      needsRender: 0,
-      levelNumber: 1,
-      rooms: [],
-      corridors: [],
-      door: null,
-      items: [],
-      enemies: [],
-      character: null,
-      logMessages: [],
-      backpackItems: null,
-      statistics: {
-        enemiesKilled: 0,
-        itemsCollected: 0,
-        roomsVisited: 0,
-        turnsPlayed: 0,
+
+      // Debug & Camera state
+      debugInfo: {
+        characterPos: null,
+        cameraPos: null,
+        roomInfo: null,
+        entityCount: {
+          rooms: 0,
+          enemies: 0,
+          items: 0,
+          corridors: 0,
+        },
       },
-      win: null,
+      cameraZoom: 50,
+      showMarkers: false,
+      disableFog: false,
+      godMode: false,
 
-      // Legacy bridge
-      _controller: null,
-      _repository: new LocalStorageRepository(),
+      // ===== Initialization =====
+      initialize: () => {
+        const datalayer = new Datalayer();
+        const model = new AppModel(datalayer);
 
-      // Initialize controller (temporary bridge)
-      initController: () => {
-        const controller = new AppController();
-        set({ _controller: controller });
-        get()._syncFromController();
-      },
-
-      // Sync data from old controller to Zustand state
-      _syncFromController: () => {
-        const controller = get()._controller;
-        if (!controller) return;
-
-        try {
-          const entities = controller.getEntitiesToRender();
-          const statuses = controller.getStatuses();
-
-          set({
-            gameState: statuses.gameState as GameState,
-            levelNumber: statuses.level,
-            rooms: entities.rooms || [],
-            corridors: entities.corridors || [],
-            door: entities.door,
-            items: entities.items || [],
-            enemies: entities.enemies || [],
-            character: entities.character,
-            logMessages: statuses.logMessages || [],
-            win: statuses.win,
-          });
-        } catch (error) {
-          console.error('[RogueStore] Failed to sync from controller:', error);
-        }
+        set({
+          model,
+          datalayer,
+          gameState: model.gameSession.state as GameState,
+        });
       },
 
-      // Manually set game state
-      setGameState: (newState: GameState) => {
-        set({ gameState: newState });
-      },
+      // ===== Reducers (Core → Zustand sync) =====
 
-      // Start new game
+      /**
+       * Start new game
+       * 1. Call core model method
+       * 2. Update zustand with new state from core
+       */
       startGame: () => {
-        const controller = get()._controller;
-        if (!controller) {
-          console.error('[RogueStore] Controller not initialized');
+        const { model } = get();
+        if (!model) {
+          console.error('[RogueStore] Model not initialized');
           return;
         }
 
-        try {
-          // @ts-expect-error -- tmp
-          controller.model.gameSession.start();
-          get()._syncFromController();
-          get().forceRender();
-        } catch (error) {
-          console.error('[RogueStore] Failed to start game:', error);
-        }
+        // 1. Update core model
+        model.gameSession.start();
+
+        // 2. Sync UI state from core
+        set({
+          gameState: model.gameSession.state as GameState,
+        });
+
+        // 3. Trigger React re-render
+        get()._triggerRender();
       },
 
-      // Make a turn (move, use item, etc)
+      /**
+       * Make a turn (move, attack, use item, etc.)
+       * 1. Call core model method
+       * 2. Update zustand with new state from core
+       */
       makeTurn: (input: string) => {
-        const controller = get()._controller;
-        if (!controller) return;
+        const { model } = get();
+        if (!model) return;
 
-        try {
-          controller.useUserInput(input);
-          get()._syncFromController();
-          get().forceRender();
-        } catch (error) {
-          console.error('[RogueStore] Failed to make turn:', error);
-        }
+        // 1. Update core model
+        model.useUserInput(input);
+
+        // 2. Sync UI state from core
+        set({
+          gameState: model.gameSession.state as GameState,
+        });
+
+        // 3. Trigger React re-render
+        get()._triggerRender();
       },
 
-      // Restart game
+      /**
+       * Restart game
+       * 1. Call core model method
+       * 2. Update zustand with new state from core
+       */
       restart: () => {
-        const controller = get()._controller;
-        if (!controller) return;
+        const { model } = get();
+        if (!model) return;
 
-        try {
-          // @ts-expect-error -- tmp
-          controller?.model?.gameSession.restart();
-          get()._syncFromController();
-          get().forceRender();
-        } catch (error) {
-          console.error('[RogueStore] Failed to restart:', error);
-        }
+        // 1. Update core model
+        model.gameSession.restart();
+
+        // 2. Sync UI state from core
+        set({
+          gameState: model.gameSession.state as GameState,
+        });
+
+        // 3. Trigger React re-render
+        get()._triggerRender();
       },
 
-      // Force re-render (will be removed after full migration)
-      forceRender: () => {
-        set((state) => ({ needsRender: state.needsRender + 1 }));
+      /**
+       * Set game state (for UI transitions)
+       */
+      setGameState: (newState: GameState) => {
+        const { model } = get();
+        if (!model) return;
+
+        // Update both core and UI state
+        model.gameSession.state = newState;
+        set({ gameState: newState });
+        get()._triggerRender();
       },
 
-      // Save game to repository
+      /**
+       * Save game to storage
+       */
       saveGame: async () => {
-        const controller = get()._controller;
-        const repository = get()._repository;
-
-        if (!controller) return;
+        const { model, datalayer } = get();
+        if (!model || !datalayer) return;
 
         try {
-          const session: GameSession = {
-            state: get().gameState,
-            level: {
-              number: get().levelNumber,
-              rooms: get().rooms,
-              corridors: get().corridors,
-              door: get().door,
-              items: get().items,
-              enemies: get().enemies,
-            },
-            character: get().character!,
-            logMessages: get().logMessages,
-            backpackItems: get().backpackItems,
-            statistics: get().statistics,
-            win: get().win,
-          };
-
-          await repository.saveSession(session);
+          // Core model handles persistence through datalayer
+          datalayer.saveSession(model.gameSession);
           console.log('[RogueStore] Game saved successfully');
         } catch (error) {
           console.error('[RogueStore] Failed to save game:', error);
         }
       },
 
-      // Load game from repository
+      /**
+       * Load game from storage
+       */
       loadGame: async () => {
-        const controller = get()._controller;
-        // const repository = get()._repository;
-
-        if (!controller) return;
+        const { model, datalayer } = get();
+        if (!model || !datalayer) return;
 
         try {
-          // Use legacy controller's loadGame (uses old Datalayer)
-          // This works because controller.datalayer reads from localStorage
-          const data = controller.loadGame();
+          const data = datalayer.loadSession();
 
           if (!data) {
             console.log('[RogueStore] No saved game found');
             return;
           }
 
-          // Sync loaded state to Zustand
-          get()._syncFromController();
-          get().forceRender();
+          // Apply loaded data to core model
+          model.gameSession.applyData(data);
+
+          // Sync UI state from core
+          set({
+            gameState: model.gameSession.state as GameState,
+          });
+
+          // Trigger re-render
+          get()._triggerRender();
 
           console.log('[RogueStore] Game loaded successfully');
         } catch (error) {
           console.error('[RogueStore] Failed to load game:', error);
         }
       },
+
+      /**
+       * Debug: Update debug info
+       */
+      setDebugInfo: (info: DebugInfo) => {
+        set({ debugInfo: info });
+      },
+
+      /**
+       * Debug: Set camera zoom
+       */
+      setCameraZoom: (zoom: number) => {
+        set({ cameraZoom: zoom });
+      },
+
+      /**
+       * Debug: Toggle debug markers
+       */
+      toggleMarkers: () => {
+        set((state) => ({ showMarkers: !state.showMarkers }));
+      },
+
+      /**
+       * Debug: Toggle fog of war
+       */
+      toggleFog: () => {
+        set((state) => ({ disableFog: !state.disableFog }));
+      },
+
+      /**
+       * Debug: Toggle god mode (invincibility + infinite resources)
+       */
+      toggleGodMode: () => {
+        const { model } = get();
+        if (!model || !model.gameSession.character) return;
+
+        const newGodMode = !get().godMode;
+        set({ godMode: newGodMode });
+
+        if (newGodMode) {
+          // Enable god mode: max stats
+          const char = model.gameSession.character;
+          char.hp = 9999;
+          char.maxHp = 9999;
+          char.str = 999;
+          char.dex = 999;
+          char.gold = 9999;
+        }
+
+        get()._triggerRender();
+      },
+
+      /**
+       * Internal: Trigger React re-render
+       * Increments counter to force components to re-render
+       */
+      _triggerRender: () => {
+        set((state) => ({ renderTrigger: state.renderTrigger + 1 }));
+      },
     }),
     { name: 'RogueGameStore' }
   )
 );
 
-// Selectors for optimized re-renders
+// ===== Selectors =====
+// These selectors read directly from core model (single source of truth)
+// Components subscribe to these selectors for reactive updates
+
 export const selectGameState = (state: RogueGameStore) => state.gameState;
-export const selectCharacter = (state: RogueGameStore) => state.character;
-export const selectRooms = (state: RogueGameStore) => state.rooms;
-export const selectEnemies = (state: RogueGameStore) => state.enemies;
-export const selectItems = (state: RogueGameStore) => state.items;
-export const selectLogMessages = (state: RogueGameStore) => state.logMessages;
-export const selectLevelNumber = (state: RogueGameStore) => state.levelNumber;
+export const selectRenderTrigger = (state: RogueGameStore) => state.renderTrigger;
+
+// Core model selectors - read directly from core entities
+export const selectModel = (state: RogueGameStore) => state.model;
+
+export const selectCharacter = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.character || null;
+};
+
+export const selectRooms = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.rooms || [];
+};
+
+export const selectCorridors = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.corridors || [];
+};
+
+export const selectDoor = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.door || null;
+};
+
+export const selectEnemies = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.enemies || [];
+};
+
+export const selectItems = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.items || [];
+};
+
+export const selectLogMessages = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.logMessages || [];
+};
+
+export const selectLevelNumber = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.level?.level || 1;
+};
+
+export const selectBackpackItems = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.character?.backpack?.items || [];
+};
+
+export const selectStatistics = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.statistics || {
+    enemiesKilled: 0,
+    foodEaten: 0,
+    elixirsDrunk: 0,
+    scrollsUsed: 0,
+    hitMissed: 0,
+    travelledDistance: 0,
+  };
+};
+
+export const selectWin = (state: RogueGameStore) => {
+  state.renderTrigger; // Subscribe to render trigger
+  return state.model?.gameSession?.win || null;
+};
+
+// ===== Debug Selectors =====
+export const selectDebugInfo = (state: RogueGameStore) => state.debugInfo;
+export const selectCameraZoom = (state: RogueGameStore) => state.cameraZoom;
+export const selectShowMarkers = (state: RogueGameStore) => state.showMarkers;
+export const selectDisableFog = (state: RogueGameStore) => state.disableFog;
+export const selectGodMode = (state: RogueGameStore) => state.godMode;

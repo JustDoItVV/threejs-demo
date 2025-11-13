@@ -6,22 +6,27 @@ import { Button } from '@/ui/button';
 
 import { useRogueStore } from '../../store/rogue-store';
 
+import type { HighScoreEntry } from '../../types/game-types';
+
 export function MenuScreen() {
-  const [highscores, setHighscores] = useState<any[]>([]);
+  const [highscores, setHighscores] = useState<HighScoreEntry[]>([]);
   const startGame = useRogueStore((state) => state.startGame);
-  const repository = useRogueStore((state) => state._repository);
+  const datalayer = useRogueStore((state) => state.datalayer);
 
   useEffect(() => {
+    if (!datalayer) return;
+
     const loadScores = async () => {
       try {
-        const scores = await repository.loadHighScores(10);
+        // @ts-expect-error -- tmp
+        const scores = await datalayer.loadHighScores(10);
         setHighscores(scores);
       } catch (err) {
         console.error('Failed to load highscores:', err);
       }
     };
     loadScores();
-  }, [repository]);
+  }, [datalayer]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/90 pointer-events-auto">
@@ -54,7 +59,7 @@ export function MenuScreen() {
         )}
 
         <div className="mt-6 text-xs text-gray-500 text-center">
-          <p>Navigate 21 levels of dungeons</p>
+          <p>Navigate 7 levels of dungeons</p>
           <p>Fight monsters, collect treasures</p>
           <p>Reach the final door to win!</p>
         </div>

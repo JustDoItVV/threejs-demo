@@ -1,52 +1,69 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
-import { Enemy } from '../../core/types/game-types';
+import { useFrame } from '@react-three/fiber';
+
+import { getEnemySprite } from '../../config/assets';
+import { Enemy } from '../../types/game-types';
 
 interface EnemySpriteProps {
   enemy: Enemy;
 }
 
-const ENEMY_COLORS: Record<string, string> = {
-  zombie: '#2a9d2f',
-  vampire: '#c41e1e',
-  ghost: '#e0e0e0',
-  ogr: '#d4a017',
-  snake: '#9370db',
-};
-
 export function EnemySprite({ enemy }: EnemySpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const timeAccumulator = useRef(0);
 
-  const color = useMemo(() => {
-    return ENEMY_COLORS[enemy.subtype] || '#ff0000';
-  }, [enemy.subtype]);
+  const animation: 'idle' | 'walk' | 'attack' = 'idle';
+  const direction: 'down' | 'side' | 'up' = 'down';
+  const totalFrames = 4;
+  const frameRate = 6;
+  const frameDuration = 1 / frameRate;
 
-  useEffect(() => {
-    if (spriteRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
-      const ctx = canvas.getContext('2d');
+  const texturePath = useMemo(
+    () => getEnemySprite(enemy.subtype, animation, direction),
+    [enemy.subtype, animation, direction]
+  );
 
-      if (ctx) {
-        ctx.fillStyle = color;
-        ctx.fillRect(30, 30, 68, 68);
+  const texture = useMemo(() => {
+    try {
+      const loader = new THREE.TextureLoader();
+      const tex = loader.load(texturePath);
 
-        ctx.fillStyle = 'black';
-        ctx.fillRect(45, 45, 15, 15);
-        ctx.fillRect(68, 45, 15, 15);
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
 
-        ctx.fillRect(50, 75, 28, 8);
+      tex.repeat.set(1 / totalFrames, 1);
+      tex.offset.set(0, 0);
 
-        const texture = new THREE.CanvasTexture(canvas);
-        spriteRef.current.material.map = texture;
-        spriteRef.current.material.needsUpdate = true;
-      }
+      return tex;
+    } catch (error) {
+      console.error(`[EnemySprite] Failed to load texture for ${enemy.subtype}:`, error);
+      return null;
     }
-  }, [color]);
+  }, [texturePath, totalFrames, enemy.subtype]);
+
+  useFrame((_state, delta: number) => {
+    if (!texture) return;
+
+    timeAccumulator.current += delta;
+
+    if (timeAccumulator.current >= frameDuration) {
+      timeAccumulator.current -= frameDuration;
+
+      const nextFrame = (currentFrame + 1) % totalFrames;
+      setCurrentFrame(nextFrame);
+
+      texture.offset.set(nextFrame / totalFrames, 0);
+    }
+  });
 
   if (!enemy?.position?.room) {
     return null;
@@ -58,14 +75,19 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
   const worldZ = 0.5;
   const visible = room.isSeen;
 
+  if (!texture) {
+    console.warn(`[EnemySprite] Texture not loaded for ${enemy.subtype}, skipping render`);
+    return null;
+  }
+
   return (
     <sprite
       ref={spriteRef}
       position={[worldX, worldY, worldZ]}
-      scale={[0.9, 0.9, 0.9]}
+      scale={[1.5, 1.5, 1]}
       visible={visible}
     >
-      <spriteMaterial attach="material" transparent />
+      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
     </sprite>
   );
 }

@@ -11,8 +11,8 @@ export function RogueGame() {
   useKeyboardControls();
 
   return (
-    <div className="relative w-full h-full">
-      <CanvasWrapper>
+    <div className="relative w-full h-full bg-black">
+      <CanvasWrapper className="bg-black">
         <GameScene />
       </CanvasWrapper>
       <GameUI />

@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
+import * as THREE from 'three';
 
-import { Room } from '../../core/types/game-types';
+import { getTileSprite } from '../../config/assets';
+import { Room } from '../../types/game-types';
 
 interface RoomMeshProps {
   room: Room;
@@ -11,15 +13,55 @@ interface RoomMeshProps {
 }
 
 export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }: RoomMeshProps) {
-  const floorColor = useMemo(() => {
-    const colors = ['#5a4a3a', '#4a3a2a', '#6a5a4a'];
-    // @ts-expect-error -- tmp
-    return colors[room.number % colors.length];
-    // @ts-expect-error -- tmp
-  }, [room.number]);
+  const floorTexture = useMemo(() => {
+    try {
+      const tileIndex = room.id % 3;
+      const texturePath = getTileSprite('floor', tileIndex);
 
-  const wallHeight = 0.5;
-  const wallThickness = 0.1;
+      const loader = new THREE.TextureLoader();
+      const texture = loader.load(texturePath);
+
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(room.sizeX, room.sizeY);
+
+      return texture;
+    } catch (error) {
+      console.error('[RoomMesh] Failed to load floor texture:', error);
+      return null;
+    }
+  }, [room.id, room.sizeX, room.sizeY]);
+
+  const wallTexture = useMemo(() => {
+    try {
+      const texturePath = getTileSprite('wall', 0);
+
+      const loader = new THREE.TextureLoader();
+      const texture = loader.load(texturePath);
+
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+
+      return texture;
+    } catch (error) {
+      console.error('[RoomMesh] Failed to load wall texture:', error);
+      return null;
+    }
+  }, []);
+
+  const wallHeight = 1.0;
+  const wallThickness = 0.15;
+  const cornerSize = wallThickness;
 
   const opacity = disableFog ? 1.0 : room.isSeen ? 1.0 : 0.3;
   const MaterialComponent = useBasicMaterial ? 'meshBasicMaterial' : 'meshLambertMaterial';
@@ -27,31 +69,115 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
   const centerX = room.fieldX + room.sizeX / 2;
   const centerY = room.fieldY + room.sizeY / 2;
 
+  const wallMaterial = wallTexture ? (
+    <MaterialComponent map={wallTexture} opacity={opacity} transparent />
+  ) : (
+    <MaterialComponent color="#3a2a1a" opacity={opacity} transparent />
+  );
+
   return (
     <group>
-      <mesh position={[centerX, centerY, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Floor */}
+      <mesh position={[centerX, centerY, 0]} receiveShadow>
         <planeGeometry args={[room.sizeX, room.sizeY]} />
-        <MaterialComponent color={floorColor} opacity={opacity} transparent />
+        {floorTexture ? (
+          <MaterialComponent
+            map={floorTexture}
+            opacity={opacity}
+            transparent
+            side={THREE.DoubleSide}
+          />
+        ) : (
+          <MaterialComponent
+            color="#5a4a3a"
+            opacity={opacity}
+            transparent
+            side={THREE.DoubleSide}
+          />
+        )}
       </mesh>
 
-      <mesh position={[centerX, room.fieldY, wallHeight / 2]} castShadow>
-        <boxGeometry args={[room.sizeX + wallThickness * 2, wallHeight, wallThickness]} />
-        <MaterialComponent color="#3a2a1a" opacity={opacity} transparent />
+      {/* North Wall */}
+      <mesh position={[centerX, room.fieldY - wallThickness / 2, wallHeight / 2]} castShadow>
+        <boxGeometry args={[room.sizeX - 2 * cornerSize, wallThickness, wallHeight]} />
+        {wallMaterial}
       </mesh>
 
-      <mesh position={[centerX, room.fieldY + room.sizeY, wallHeight / 2]} castShadow>
-        <boxGeometry args={[room.sizeX + wallThickness * 2, wallHeight, wallThickness]} />
-        <MaterialComponent color="#3a2a1a" opacity={opacity} transparent />
+      {/* South Wall */}
+      <mesh
+        position={[centerX, room.fieldY + room.sizeY + wallThickness / 2, wallHeight / 2]}
+        castShadow
+      >
+        <boxGeometry args={[room.sizeX - 2 * cornerSize, wallThickness, wallHeight]} />
+        {wallMaterial}
       </mesh>
 
-      <mesh position={[room.fieldX, centerY, wallHeight / 2]} castShadow>
-        <boxGeometry args={[wallThickness, wallHeight, room.sizeY]} />
-        <MaterialComponent color="#3a2a1a" opacity={opacity} transparent />
+      {/* West Wall */}
+      <mesh position={[room.fieldX - wallThickness / 2, centerY, wallHeight / 2]} castShadow>
+        <boxGeometry args={[wallThickness, room.sizeY - 2 * cornerSize, wallHeight]} />
+        {wallMaterial}
       </mesh>
 
-      <mesh position={[room.fieldX + room.sizeX, centerY, wallHeight / 2]} castShadow>
-        <boxGeometry args={[wallThickness, wallHeight, room.sizeY]} />
-        <MaterialComponent color="#3a2a1a" opacity={opacity} transparent />
+      {/* East Wall (at maximum X) - shortened to avoid corners */}
+      <mesh
+        position={[room.fieldX + room.sizeX + wallThickness / 2, centerY, wallHeight / 2]}
+        castShadow
+      >
+        <boxGeometry args={[wallThickness, room.sizeY - 2 * cornerSize, wallHeight]} />
+        {wallMaterial}
+      </mesh>
+
+      {/* Corner Blocks - prevent wall intersections */}
+      {/* Northwest Corner */}
+      <mesh
+        position={[
+          room.fieldX - wallThickness / 2,
+          room.fieldY - wallThickness / 2,
+          wallHeight / 2,
+        ]}
+        castShadow
+      >
+        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
+        {wallMaterial}
+      </mesh>
+
+      {/* Northeast Corner */}
+      <mesh
+        position={[
+          room.fieldX + room.sizeX + wallThickness / 2,
+          room.fieldY - wallThickness / 2,
+          wallHeight / 2,
+        ]}
+        castShadow
+      >
+        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
+        {wallMaterial}
+      </mesh>
+
+      {/* Southwest Corner */}
+      <mesh
+        position={[
+          room.fieldX - wallThickness / 2,
+          room.fieldY + room.sizeY + wallThickness / 2,
+          wallHeight / 2,
+        ]}
+        castShadow
+      >
+        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
+        {wallMaterial}
+      </mesh>
+
+      {/* Southeast Corner */}
+      <mesh
+        position={[
+          room.fieldX + room.sizeX + wallThickness / 2,
+          room.fieldY + room.sizeY + wallThickness / 2,
+          wallHeight / 2,
+        ]}
+        castShadow
+      >
+        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
+        {wallMaterial}
       </mesh>
     </group>
   );

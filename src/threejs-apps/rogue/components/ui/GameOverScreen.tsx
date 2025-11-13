@@ -2,17 +2,23 @@
 
 import { Button } from '@/ui/button';
 
-import { useRogueStore } from '../../store/rogue-store';
+import {
+  selectCharacter,
+  selectLevelNumber,
+  selectWin,
+  useRogueStore,
+} from '../../store/rogue-store';
 
 export function GameOverScreen() {
-  const win = useRogueStore((state) => state.win);
-  const levelNumber = useRogueStore((state) => state.levelNumber);
-  const character = useRogueStore((state) => state.character);
+  const win = useRogueStore(selectWin);
+  const levelNumber = useRogueStore(selectLevelNumber);
+  const character = useRogueStore(selectCharacter);
   const restart = useRogueStore((state) => state.restart);
+  const startGame = useRogueStore((state) => state.startGame);
 
   const isWin = win === true;
   const title = isWin ? 'VICTORY!' : 'GAME OVER';
-  const message = isWin ? 'You have conquered all 21 levels!' : 'You have fallen in the dungeon...';
+  const message = isWin ? 'You have conquered all 7 levels!' : 'You have fallen in the dungeon...';
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/90 pointer-events-auto">
@@ -52,9 +58,14 @@ export function GameOverScreen() {
           </div>
         </div>
 
-        <Button onClick={restart} className="w-full" size="lg">
-          Return to Menu
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button onClick={startGame} variant="default" className="w-full" size="lg">
+            Start New Game
+          </Button>
+          <Button onClick={restart} variant="outline" className="w-full" size="lg">
+            Return to Menu
+          </Button>
+        </div>
       </div>
     </div>
   );

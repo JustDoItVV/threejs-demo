@@ -160,8 +160,11 @@ export function removeTextureFromCache(path: string): void {
   }
 }
 
-// TODO: Future enhancements
-// - Add sprite sheet frame extraction
-// - Add texture atlas support
-// - Add loading progress tracking
-// - Add error fallback textures
+/**
+ * Future Enhancement Ideas:
+ * - Sprite sheet frame extraction utilities
+ * - Texture atlas support for better performance
+ * - Loading progress tracking and callbacks
+ * - Error fallback textures for missing assets
+ * - Batch loading with priority queues
+ */

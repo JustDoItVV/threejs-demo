@@ -51,7 +51,8 @@ export function useKeyboardControls() {
           handled = true;
         }
       } else if (gameState === 'backpack') {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' || event.code === 'KeyB') {
+          // Close backpack with Escape or B (toggle)
           setGameState('game');
           handled = true;
         } else if (/^[1-9]$/.test(event.key)) {

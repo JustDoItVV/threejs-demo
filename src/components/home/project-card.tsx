@@ -14,7 +14,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link href={`/projects/${project.slug}`} className="block group h-full">
       <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:-translate-y-2 flex flex-col">
-        <div className="relative w-full h-60 bg-muted overflow-hidden flex-shrink-0">
+        <div className="relative w-full h-60 bg-muted overflow-hidden shrink-0">
           {project.thumbnail ? (
             <Image
               src={getAssetPath(project.thumbnail)}

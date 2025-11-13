@@ -5,9 +5,9 @@ export const Projects: Project[] = [
     slug: 'rogue',
     title: 'Rogue',
     description:
-      'Classic turn-based dungeon crawler with procedural level generation, turn-based combat, inventory system, and fog of war. Navigate through 21 levels of dungeons fighting monsters and collecting treasures. Octopath Traveler inspired visual style with orthographic camera and 2D sprites.',
-    thumbnail: '/projects-screens/thumbnail.png',
-    tags: ['Game', 'Roguelike', 'Turn-based', 'Sprites', 'Fog of War'],
+      'Classic turn-based roguelike dungeon crawler with procedural level generation featuring 7 levels of increasing difficulty. Sprite-based visualization for character and enemies. Turn-based tactical combat and character progression system (HP, Dex, Str). Full inventory management with backpack. Dynamic fog of war.',
+    thumbnail: '/projects-screens/rogue.png',
+    tags: ['Game', 'Roguelike', 'Turn-based', 'Sprites', 'Fog of War', 'Inventory', 'Procedural'],
   },
   {
     slug: 'froggy-road',

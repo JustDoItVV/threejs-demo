@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+import { useFrame } from '@react-three/fiber';
+
 import { getCharacterSprite } from '../../config/assets';
-import { Character } from '../../core/types/game-types';
-import { loadTexture } from '../../utils/texture-loader';
+import { Character } from '../../types/game-types';
 
 interface CharacterSpriteProps {
   character: Character;
@@ -13,29 +14,56 @@ interface CharacterSpriteProps {
 
 export function CharacterSprite({ character }: CharacterSpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const timeAccumulator = useRef(0);
 
-  // TODO: Add animation state management (idle, walk, attack)
-  // TODO: Add direction state management (down, side, up)
-  // For now, use static 'idle' animation facing 'down'
   const animation: 'idle' | 'walk' | 'attack' = 'idle';
   const direction: 'down' | 'side' | 'up' = 'down';
+  const totalFrames = 4;
+  const frameRate = 8;
+  const frameDuration = 1 / frameRate;
 
-  // Get the sprite texture path based on animation and direction
   const texturePath = useMemo(
     () => getCharacterSprite(animation, direction),
     [animation, direction]
   );
 
-  // Load and cache the texture
-  // Character sprites are sprite sheets with 4 frames, we show frame 0
   const texture = useMemo(() => {
     try {
-      return loadTexture(texturePath, 0, 4); // frameIndex=0, totalFrames=4
+      const loader = new THREE.TextureLoader();
+      const tex = loader.load(texturePath);
+
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+
+      tex.repeat.set(1 / totalFrames, 1); // Show 1/4 of texture width
+      tex.offset.set(0, 0); // Start at frame 0
+
+      return tex;
     } catch (error) {
       console.error('[CharacterSprite] Failed to load texture:', error);
       return null;
     }
-  }, [texturePath]);
+  }, [texturePath, totalFrames]);
+
+  useFrame((_state, delta: number) => {
+    if (!texture) return;
+
+    timeAccumulator.current += delta;
+
+    if (timeAccumulator.current >= frameDuration) {
+      timeAccumulator.current -= frameDuration;
+
+      const nextFrame = (currentFrame + 1) % totalFrames;
+      setCurrentFrame(nextFrame);
+
+      texture.offset.set(nextFrame / totalFrames, 0);
+    }
+  });
 
   if (!character?.position?.room) {
     return null;
@@ -46,7 +74,6 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
   const worldY = room.fieldY + character.position.y;
   const worldZ = 0.5;
 
-  // If texture failed to load, don't render the sprite
   if (!texture) {
     console.warn('[CharacterSprite] Texture not loaded, skipping render');
     return null;
@@ -54,7 +81,7 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
 
   return (
     <sprite ref={spriteRef} position={[worldX, worldY, worldZ]} scale={[1.5, 1.5, 1]}>
-      <spriteMaterial attach="material" map={texture} transparent />
+      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
     </sprite>
   );
 }

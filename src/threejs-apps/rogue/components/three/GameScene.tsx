@@ -1,55 +1,79 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import { OrthographicCamera } from '@react-three/drei';
 
-import { Enemy, Item, Room } from '../../core/types/game-types';
-import { selectCharacter, selectRooms, useRogueStore } from '../../store/rogue-store';
-// import { CorridorMesh } from '../meshes/CorridorMesh';
+import {
+  selectCameraZoom,
+  selectCharacter,
+  selectCorridors,
+  selectDisableFog,
+  selectDoor,
+  selectEnemies,
+  selectItems,
+  selectRooms,
+  selectShowMarkers,
+  useRogueStore,
+} from '../../store/rogue-store';
+import { Corridor, Enemy, Item, Room } from '../../types/game-types';
+import { CorridorMesh } from '../meshes/CorridorMesh';
 import { RoomMesh } from '../meshes/RoomMesh';
 import { CharacterSprite } from '../sprites/CharacterSprite';
 import { DoorSprite } from '../sprites/DoorSprite';
 import { EnemySprite } from '../sprites/EnemySprite';
 import { ItemSprite } from '../sprites/ItemSprite';
 
-THREE.Object3D.DEFAULT_UP.set(0, 1, 1);
-
 // Camera offset for 45° side view (Y and Z equal for 45° angle)
 const CAMERA_OFFSET = { x: 0, y: -8, z: 8 };
 
 export function GameScene() {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
-  const [showMarkers, setShowMarkers] = useState(true);
-  const [cameraZoom, setCameraZoom] = useState(50);
-  const [useBasicMat, setUseBasicMat] = useState(false);
-  const [disableFog, setDisableFog] = useState(false);
+  const originalUpRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
+  // Store selectors
   const character = useRogueStore(selectCharacter);
   const rooms = useRogueStore(selectRooms);
+  const corridors = useRogueStore(selectCorridors);
+  const door = useRogueStore(selectDoor);
+  const items = useRogueStore(selectItems);
+  const enemies = useRogueStore(selectEnemies);
+  const initialize = useRogueStore((state) => state.initialize);
 
-  const corridors = useRogueStore((state) => state.corridors);
-  const door = useRogueStore((state) => state.door);
-  const items = useRogueStore((state) => state.items);
-  const enemies = useRogueStore((state) => state.enemies);
-  const initController = useRogueStore((state) => state.initController);
+  // Debug & Camera state from store
+  const showMarkers = useRogueStore(selectShowMarkers);
+  const cameraZoom = useRogueStore(selectCameraZoom);
+  const disableFog = useRogueStore(selectDisableFog);
+  const setDebugInfo = useRogueStore((state) => state.setDebugInfo);
 
-  // Initialize controller on mount
+  // Save and restore THREE.Object3D.DEFAULT_UP to prevent affecting other apps
+  useEffect(() => {
+    // Save original DEFAULT_UP
+    originalUpRef.current.copy(THREE.Object3D.DEFAULT_UP);
+
+    // Set custom DEFAULT_UP for rogue game (45° isometric view)
+    THREE.Object3D.DEFAULT_UP.set(0, 1, 1);
+
+    // Restore original DEFAULT_UP on unmount
+    return () => {
+      THREE.Object3D.DEFAULT_UP.copy(originalUpRef.current);
+    };
+  }, []);
+
+  // Initialize model on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    initController();
-  }, [initController]);
+    initialize();
+  }, [initialize]);
 
-  // Debug info and camera controls
+  // Update debug info when game state changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const charRoom = character?.position?.room;
 
-    // Always initialize rogueDebug
-    // @ts-expect-error -- tmp
-    window.rogueDebug = {
+    setDebugInfo({
       characterPos: charRoom
         ? {
             x: charRoom.fieldX + character.position.x,
@@ -77,69 +101,18 @@ export function GameScene() {
         items: items.length,
         corridors: corridors.length,
       },
-    };
+    });
+  }, [character, rooms, corridors, enemies, items, setDebugInfo]);
 
-    // Camera controls
-    const worldX = charRoom ? charRoom.fieldX + character.position.x : 0;
-    const worldY = charRoom ? charRoom.fieldY + character.position.y : 0;
+  // Update camera zoom when it changes in store
+  useEffect(() => {
+    if (cameraRef.current) {
+      cameraRef.current.zoom = cameraZoom;
+      cameraRef.current.updateProjectionMatrix();
+    }
+  }, [cameraZoom]);
 
-    // @ts-expect-error -- tmp
-    window.rogueCameraControls = {
-      lookAtCharacter: () => {
-        if (cameraRef.current && charRoom) {
-          cameraRef.current.position.set(
-            worldX + CAMERA_OFFSET.x,
-            worldY + CAMERA_OFFSET.y,
-            CAMERA_OFFSET.z
-          );
-          cameraRef.current.lookAt(worldX, worldY, 0.5);
-          cameraRef.current.updateProjectionMatrix();
-        }
-      },
-      lookAtRoomCenter: () => {
-        if (cameraRef.current && charRoom) {
-          const centerX = charRoom.fieldX + charRoom.sizeX / 2;
-          const centerY = charRoom.fieldY + charRoom.sizeY / 2;
-          cameraRef.current.position.set(
-            centerX + CAMERA_OFFSET.x,
-            centerY + CAMERA_OFFSET.y,
-            CAMERA_OFFSET.z
-          );
-          cameraRef.current.lookAt(centerX, centerY, 0.5);
-          cameraRef.current.updateProjectionMatrix();
-        }
-      },
-      resetCamera: () => {
-        if (cameraRef.current) {
-          cameraRef.current.position.set(
-            10 + CAMERA_OFFSET.x,
-            10 + CAMERA_OFFSET.y,
-            CAMERA_OFFSET.z
-          );
-          cameraRef.current.lookAt(10, 10, 0.5);
-          cameraRef.current.updateProjectionMatrix();
-        }
-      },
-      setZoom: (zoom: number) => {
-        setCameraZoom(zoom);
-        if (cameraRef.current) {
-          cameraRef.current.zoom = zoom;
-          cameraRef.current.updateProjectionMatrix();
-        }
-      },
-      toggleMarkers: (show: boolean) => {
-        setShowMarkers(show);
-      },
-      toggleFogOfWar: () => {
-        setDisableFog((prev) => !prev);
-      },
-      useBasicMaterial: () => {
-        setUseBasicMat((prev) => !prev);
-      },
-    };
-  }, [character, rooms, corridors, enemies, items, disableFog, useBasicMat]);
-
-  // Force camera to correct position on mount and character updates
+  // Force camera to correct position on character movement
   useEffect(() => {
     if (cameraRef.current && character?.position?.room) {
       const charRoom = character.position.room;
@@ -181,7 +154,6 @@ export function GameScene() {
         zoom={cameraZoom}
         near={0.1}
         far={1000}
-        // onUpdate={(camera) => camera.lookAt(new THREE.Vector3(worldX, worldY, 0.5))}
         rotation={[-Math.PI / 4, 0, 0]}
       />
 
@@ -207,7 +179,10 @@ export function GameScene() {
             <meshBasicMaterial color="green" />
           </mesh>
 
-          <gridHelper args={[100, 20, '#444444', '#222222']} position={[0, 0, 0]} />
+          {/* Main grid: cells every 1 unit (major lines) */}
+          <gridHelper args={[100, 100, '#555555', '#333333']} position={[0, 0, 0]} />
+          {/* Sub grid: lines every 0.5 units (minor lines) */}
+          <gridHelper args={[100, 200, '#333333', '#1a1a1a']} position={[0, 0, -0.01]} />
           <axesHelper args={[10]} />
         </>
       )}
@@ -216,14 +191,14 @@ export function GameScene() {
         <RoomMesh
           key={`room-${idx}`}
           room={room}
-          useBasicMaterial={useBasicMat}
+          useBasicMaterial={false}
           disableFog={disableFog}
         />
       ))}
 
-      {/* {corridors.map((corridor: any, idx: number) => (
+      {corridors.map((corridor: Corridor, idx: number) => (
         <CorridorMesh key={`corridor-${idx}`} corridor={corridor} disableFog={disableFog} />
-      ))} */}
+      ))}
 
       {door && <DoorSprite door={door} />}
 
