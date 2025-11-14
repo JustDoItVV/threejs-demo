@@ -8,6 +8,7 @@ import {
   usePointCloudStore,
 } from '../../store/point-cloud-store';
 import { VIEWER_CONFIG } from '../../config/viewer.config';
+import { ViewModeSelector } from './ViewModeSelector';
 
 export function ControlPanel() {
   const showControlPanel = usePointCloudStore(selectShowControlPanel);
@@ -29,6 +30,11 @@ export function ControlPanel() {
   return (
     <div className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 p-4 rounded-lg shadow-lg max-w-xs z-10">
       <h3 className="font-bold mb-3 text-sm">Controls</h3>
+
+      {/* View Mode Selector */}
+      <div className="mb-3">
+        <ViewModeSelector />
+      </div>
 
       <div className="space-y-3 text-sm">
         {/* Load File Button */}

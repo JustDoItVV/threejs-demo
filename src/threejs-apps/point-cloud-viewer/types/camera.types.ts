@@ -4,6 +4,8 @@
 
 export type CameraMode = 'orthographic' | 'firstPerson';
 
+export type ViewMode = 'normal' | 'fullWindow' | 'fullscreen';
+
 export interface OrthographicCameraConfig {
   zoom: number;
   minZoom: number;

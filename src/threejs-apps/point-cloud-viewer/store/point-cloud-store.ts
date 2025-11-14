@@ -10,6 +10,7 @@ import {
   OrthographicCameraConfig,
   PointCloudData,
   PointCloudMetrics,
+  ViewMode,
 } from '../types';
 import {
   DEFAULT_FIRST_PERSON_CONFIG,
@@ -41,6 +42,7 @@ interface PointCloudStore {
   showControlPanel: boolean;
   showFileLoader: boolean;
   showHelp: boolean;
+  viewMode: ViewMode;
 
   // === Actions ===
   setPointCloud: (data: PointCloudData | null) => void;
@@ -66,6 +68,7 @@ interface PointCloudStore {
   toggleControlPanel: () => void;
   toggleFileLoader: () => void;
   toggleHelp: () => void;
+  setViewMode: (mode: ViewMode) => void;
 
   // Reset
   reset: () => void;
@@ -94,6 +97,7 @@ export const usePointCloudStore = create<PointCloudStore>()(
       showControlPanel: true,
       showFileLoader: false,
       showHelp: false,
+      viewMode: 'normal',
 
       // === Actions ===
       setPointCloud: (data) => set({ pointCloud: data }),
@@ -160,6 +164,8 @@ export const usePointCloudStore = create<PointCloudStore>()(
 
       toggleHelp: () => set((state) => ({ showHelp: !state.showHelp })),
 
+      setViewMode: (mode) => set({ viewMode: mode }),
+
       // Reset
       reset: () =>
         set({
@@ -202,3 +208,4 @@ export const selectShowStats = (state: PointCloudStore) => state.showStats;
 export const selectShowControlPanel = (state: PointCloudStore) => state.showControlPanel;
 export const selectShowFileLoader = (state: PointCloudStore) => state.showFileLoader;
 export const selectShowHelp = (state: PointCloudStore) => state.showHelp;
+export const selectViewMode = (state: PointCloudStore) => state.viewMode;
