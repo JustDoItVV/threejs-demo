@@ -2,6 +2,14 @@ import { Project } from '@/types';
 
 export const Projects: Project[] = [
   {
+    slug: 'crossy-road',
+    title: 'Crossy Road',
+    description:
+      'Classic Crossy Road game clone built with Three.js. Features orthographic camera, tile-based movement, vehicle animation, collision detection, and jump physics. Includes debug panel, performance stats, and display mode controls. Based on freeCodeCamp tutorial with React best practices.',
+    thumbnail: '/projects-screens/crossy-road.png',
+    tags: ['Game', 'Three.js', 'Orthographic', 'Tile-based', 'Collision', 'Physics'],
+  },
+  {
     slug: 'rogue',
     title: 'Rogue',
     description:
