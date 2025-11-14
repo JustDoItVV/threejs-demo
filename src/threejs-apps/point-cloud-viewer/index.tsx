@@ -3,6 +3,7 @@
 import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { PointCloudScene } from './components/three/PointCloudScene';
 import { ControlPanel } from './components/ui/ControlPanel';
+import { CursorCoordinates } from './components/ui/CursorCoordinates';
 import { FileLoader } from './components/ui/FileLoader';
 import { InfoPanel } from './components/ui/InfoPanel';
 import { PerformanceStats } from './components/ui/PerformanceStats';
@@ -24,6 +25,7 @@ export function PointCloudViewer() {
       <InfoPanel />
       <FileLoader />
       <PerformanceStats />
+      <CursorCoordinates />
 
       {/* Welcome Message (when no point cloud loaded) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

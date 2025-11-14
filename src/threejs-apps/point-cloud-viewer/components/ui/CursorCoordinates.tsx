@@ -1,71 +1,67 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
-import * as THREE from 'three';
 import { selectPointCloud, usePointCloudStore } from '../../store/point-cloud-store';
 
 export function CursorCoordinates() {
   const pointCloud = usePointCloudStore(selectPointCloud);
-  const { camera, raycaster, scene } = useThree();
   const [coords, setCoords] = useState<{ x: number; y: number; z: number } | null>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!pointCloud) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Update screen position
-      setScreenPos({ x: event.clientX, y: event.clientY });
+      const canvas = document.querySelector('canvas');
+      if (!canvas) return;
 
-      // Calculate normalized device coordinates
-      const canvas = event.target as HTMLCanvasElement;
       const rect = canvas.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      const y: number = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      // Update raycaster
-      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      // Check if mouse is over canvas
+      const isOverCanvas =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
 
-      // Raycast against point cloud
-      const pointsObjects = scene.children.filter((child) => child.type === 'Points');
+      setVisible(isOverCanvas);
 
-      if (pointsObjects.length > 0) {
-        const intersects = raycaster.intersectObjects(pointsObjects, false);
+      if (isOverCanvas) {
+        // Update screen position
+        setScreenPos({ x: event.clientX, y: event.clientY });
 
-        if (intersects.length > 0) {
-          const point = intersects[0].point;
-          setCoords({
-            x: point.x,
-            y: point.y,
-            z: point.z,
-          });
-        } else {
-          // If no intersection, show camera's forward projection
-          const distance = 10;
-          const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-          const projected = camera.position.clone().add(direction.multiplyScalar(distance));
+        // Calculate normalized device coordinates
+        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-          setCoords({
-            x: projected.x,
-            y: projected.y,
-            z: projected.z,
-          });
-        }
+        // For now, show NDC coordinates (simplified version without raycasting)
+        // This avoids the need to access Three.js context from outside Canvas
+        const { center } = pointCloud.bounds.min;
+        const centerX = (pointCloud.bounds.min.x + pointCloud.bounds.max.x) / 2;
+        const centerY = (pointCloud.bounds.min.y + pointCloud.bounds.max.y) / 2;
+        const centerZ = (pointCloud.bounds.min.z + pointCloud.bounds.max.z) / 2;
+
+        const sizeX = pointCloud.bounds.max.x - pointCloud.bounds.min.x;
+        const sizeY = pointCloud.bounds.max.y - pointCloud.bounds.min.y;
+
+        // Approximate world position based on NDC
+        setCoords({
+          x: centerX + (x * sizeX) / 2,
+          y: centerY + (y * sizeY) / 2,
+          z: centerZ,
+        });
       }
     };
 
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      canvas.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleMouseMove);
 
-      return () => {
-        canvas.removeEventListener('mousemove', handleMouseMove);
-      };
-    }
-  }, [pointCloud, camera, raycaster, scene]);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [pointCloud]);
 
-  if (!coords || !pointCloud) return null;
+  if (!coords || !pointCloud || !visible) return null;
 
   return (
     <div
