@@ -5,6 +5,7 @@ import { PointCloudScene } from './components/three/PointCloudScene';
 import { ControlPanel } from './components/ui/ControlPanel';
 import { FileLoader } from './components/ui/FileLoader';
 import { InfoPanel } from './components/ui/InfoPanel';
+import { ViewModeButtons } from './components/ui/ViewModeButtons';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 
 export function PointCloudViewer() {
@@ -19,6 +20,7 @@ export function PointCloudViewer() {
       </CanvasWrapper>
 
       {/* UI Overlays */}
+      <ViewModeButtons />
       <ControlPanel />
       <InfoPanel />
       <FileLoader />

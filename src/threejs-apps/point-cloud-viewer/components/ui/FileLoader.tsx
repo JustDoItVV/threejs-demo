@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { loadPointCloudFile } from '../../loaders/loader-factory';
+import { usePointCloudWorker } from '../../hooks/usePointCloudWorker';
 import { selectIsLoading, selectShowFileLoader, usePointCloudStore } from '../../store/point-cloud-store';
 import { downloadFromGoogleDrive, downloadFromURL, downloadFromYandexDisk } from '../../utils/cloud-storage';
 import { checkFileSize } from '../../utils/point-cloud-optimizer';
@@ -23,6 +23,15 @@ export function FileLoader() {
   const [activeTab, setActiveTab] = useState<LoadSource>('local');
   const [urlInput, setUrlInput] = useState('');
 
+  const { parseFile, terminate } = usePointCloudWorker();
+
+  // Cleanup worker on unmount
+  useEffect(() => {
+    return () => {
+      terminate();
+    };
+  }, [terminate]);
+
   const handleFileSelect = async (file: File) => {
     try {
       setError(null);
@@ -39,28 +48,42 @@ export function FileLoader() {
 
       const startTime = performance.now();
 
-      // Load point cloud
-      const data = await loadPointCloudFile(file, (progress) => {
-        setLoadingProgress(progress);
-      });
+      // Parse point cloud using Web Worker
+      parseFile(
+        file,
+        // onProgress
+        (progress) => {
+          setLoadingProgress(progress);
+        },
+        // onSuccess
+        (data) => {
+          const loadTime = performance.now() - startTime;
 
-      const loadTime = performance.now() - startTime;
+          setPointCloud(data);
+          setMetrics({
+            totalPoints: data.count,
+            visiblePoints: data.count,
+            fileSize: file.size,
+            loadTime,
+            format: data.format,
+          });
 
-      setPointCloud(data);
-      setMetrics({
-        totalPoints: data.count,
-        visiblePoints: data.count,
-        fileSize: file.size,
-        loadTime,
-        format: data.format,
-      });
-
-      toggleFileLoader();
+          setLoading(false);
+          setLoadingProgress(null);
+          toggleFileLoader();
+        },
+        // onError
+        (error) => {
+          setError(error);
+          console.error('Error loading point cloud:', error);
+          setLoading(false);
+          setLoadingProgress(null);
+        }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load file';
       setError(message);
       console.error('Error loading point cloud:', error);
-    } finally {
       setLoading(false);
       setLoadingProgress(null);
     }

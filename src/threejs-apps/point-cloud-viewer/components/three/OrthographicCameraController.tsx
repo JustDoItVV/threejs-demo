@@ -30,9 +30,17 @@ export function OrthographicCameraController() {
       cameraRef.current.updateProjectionMatrix();
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault(); // Prevent browser context menu
+    };
+
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button === 0) {
         // Left click for panning
+        isDraggingRef.current = true;
+        previousMouseRef.current = { x: e.clientX, y: e.clientY };
+      } else if (e.button === 2) {
+        // Right click for rotation
         isDraggingRef.current = true;
         previousMouseRef.current = { x: e.clientX, y: e.clientY };
       }
@@ -44,10 +52,15 @@ export function OrthographicCameraController() {
       const deltaX = e.clientX - previousMouseRef.current.x;
       const deltaY = e.clientY - previousMouseRef.current.y;
 
-      // Pan camera (move target)
-      const panSpeed = config.panSpeed / cameraRef.current.zoom;
-      targetRef.current.x -= deltaX * panSpeed;
-      targetRef.current.y += deltaY * panSpeed;
+      if (e.buttons === 1) {
+        // Left button - pan camera (move target)
+        const panSpeed = config.panSpeed / cameraRef.current.zoom;
+        targetRef.current.x -= deltaX * panSpeed;
+        targetRef.current.y += deltaY * panSpeed;
+      } else if (e.buttons === 2) {
+        // Right button - rotate camera
+        rotationRef.current += deltaX * config.rotationSpeed * 0.01;
+      }
 
       previousMouseRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -57,12 +70,14 @@ export function OrthographicCameraController() {
     };
 
     canvas.addEventListener('wheel', handleWheel, { passive: false });
+    canvas.addEventListener('contextmenu', handleContextMenu);
     canvas.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
+      canvas.removeEventListener('contextmenu', handleContextMenu);
       canvas.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
