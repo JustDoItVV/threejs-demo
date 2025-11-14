@@ -188,7 +188,7 @@ interface DefaultIPhoneModelProps {
 }
 
 function DefaultIPhoneModel({ removeScreen, onMeshesExtracted }: DefaultIPhoneModelProps) {
-  const modelPath = getAssetPath('/models/iphone-14/iPhone 14 pro.glb');
+  const modelPath = getAssetPath('/models/iphone-14/iPhone-14-pro.glb');
   const { scene } = useGLTF(modelPath);
   const groupRef = useRef<THREE.Group>(null);
 
@@ -245,5 +245,5 @@ function DefaultIPhoneModel({ removeScreen, onMeshesExtracted }: DefaultIPhoneMo
 }
 
 // Preload default model
-const modelPath = getAssetPath('/models/iphone-14/iPhone 14 pro.glb');
+const modelPath = getAssetPath('/models/iphone-14/iPhone-14-pro.glb');
 useGLTF.preload(modelPath);

@@ -23,7 +23,7 @@ const DEFAULT_MODELS: DefaultModel[] = [
   {
     id: 'iphone-14',
     name: 'iPhone 14 Pro',
-    url: getAssetPath('/models/iphone-14/iPhone 14 pro.glb'),
+    url: getAssetPath('/models/iphone-14/iPhone-14-pro.glb'),
     format: 'glb',
   },
 ];
