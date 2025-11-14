@@ -5,6 +5,7 @@ import { PointCloudScene } from './components/three/PointCloudScene';
 import { ControlPanel } from './components/ui/ControlPanel';
 import { FileLoader } from './components/ui/FileLoader';
 import { InfoPanel } from './components/ui/InfoPanel';
+import { PerformanceStats } from './components/ui/PerformanceStats';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 
 export function PointCloudViewer() {
@@ -22,6 +23,7 @@ export function PointCloudViewer() {
       <ControlPanel />
       <InfoPanel />
       <FileLoader />
+      <PerformanceStats />
 
       {/* Welcome Message (when no point cloud loaded) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
