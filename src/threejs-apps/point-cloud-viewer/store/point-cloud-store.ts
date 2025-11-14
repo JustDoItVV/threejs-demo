@@ -37,6 +37,7 @@ interface PointCloudStore {
   showBounds: boolean;
   showGrid: boolean;
   showStats: boolean;
+  useLOD: 'simple' | 'octree';
 
   // === UI State ===
   showControlPanel: boolean;
@@ -63,6 +64,7 @@ interface PointCloudStore {
   toggleBounds: () => void;
   toggleGrid: () => void;
   toggleStats: () => void;
+  setUseLOD: (mode: 'simple' | 'octree') => void;
 
   // UI actions
   toggleControlPanel: () => void;
@@ -93,6 +95,7 @@ export const usePointCloudStore = create<PointCloudStore>()(
       showBounds: false,
       showGrid: true,
       showStats: true,
+      useLOD: 'simple',
 
       showControlPanel: true,
       showFileLoader: false,
@@ -155,6 +158,8 @@ export const usePointCloudStore = create<PointCloudStore>()(
 
       toggleStats: () => set((state) => ({ showStats: !state.showStats })),
 
+      setUseLOD: (mode) => set({ useLOD: mode }),
+
       // UI actions
       toggleControlPanel: () =>
         set((state) => ({ showControlPanel: !state.showControlPanel })),
@@ -204,6 +209,7 @@ export const selectPointBudget = (state: PointCloudStore) => state.pointBudget;
 export const selectShowBounds = (state: PointCloudStore) => state.showBounds;
 export const selectShowGrid = (state: PointCloudStore) => state.showGrid;
 export const selectShowStats = (state: PointCloudStore) => state.showStats;
+export const selectUseLOD = (state: PointCloudStore) => state.useLOD;
 
 export const selectShowControlPanel = (state: PointCloudStore) => state.showControlPanel;
 export const selectShowFileLoader = (state: PointCloudStore) => state.showFileLoader;

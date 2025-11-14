@@ -16,16 +16,30 @@ export async function parsePTS(
 
   // Read file as text
   const text = await file.text();
-  const lines = text.trim().split('\n');
+  const lines = text.trim().split('\n').filter(line => line.trim().length > 0);
 
-  if (lines.length < 2) {
-    throw new Error('Invalid PTS file: too few lines');
+  if (lines.length === 0) {
+    throw new Error('Invalid PTS file: empty file');
   }
 
-  // Parse header: first line contains point count
-  const expectedCount = parseInt(lines[0].trim(), 10);
-  if (isNaN(expectedCount) || expectedCount <= 0) {
-    throw new Error('Invalid PTS file: invalid point count in header');
+  // Try to detect if first line is a header (point count) or data
+  const firstLine = lines[0].trim();
+  const firstValues = firstLine.split(/\s+/);
+
+  let startIndex = 0;
+  let expectedCount = lines.length;
+
+  // If first line has only one number, it's likely a header with point count
+  if (firstValues.length === 1) {
+    const headerCount = parseInt(firstValues[0], 10);
+    if (!isNaN(headerCount) && headerCount > 0) {
+      expectedCount = headerCount;
+      startIndex = 1; // Skip header line
+    }
+  }
+
+  if (lines.length - startIndex === 0) {
+    throw new Error('Invalid PTS file: no point data found');
   }
 
   onProgress?.({
@@ -45,8 +59,8 @@ export async function parsePTS(
     maxY = -Infinity,
     maxZ = -Infinity;
 
-  // Parse points (skip header line)
-  for (let i = 1; i < lines.length; i++) {
+  // Parse points
+  for (let i = startIndex; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue; // Skip empty lines
 
@@ -99,10 +113,12 @@ export async function parsePTS(
 
     // Report progress every 10000 points
     if (i % 10000 === 0) {
+      const processed = i - startIndex;
+      const total = lines.length - startIndex;
       onProgress?.({
-        loaded: i - 1,
-        total: expectedCount,
-        percentage: ((i - 1) / expectedCount) * 100,
+        loaded: processed,
+        total: total,
+        percentage: (processed / total) * 100,
         stage: 'parsing',
       });
     }

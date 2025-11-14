@@ -5,6 +5,7 @@ import {
   selectPointBudget,
   selectPointSize,
   selectShowControlPanel,
+  selectUseLOD,
   usePointCloudStore,
 } from '../../store/point-cloud-store';
 import { VIEWER_CONFIG } from '../../config/viewer.config';
@@ -15,10 +16,12 @@ export function ControlPanel() {
   const cameraMode = usePointCloudStore(selectCameraMode);
   const pointSize = usePointCloudStore(selectPointSize);
   const pointBudget = usePointCloudStore(selectPointBudget);
+  const useLOD = usePointCloudStore(selectUseLOD);
 
   const setCameraMode = usePointCloudStore((state) => state.setCameraMode);
   const setPointSize = usePointCloudStore((state) => state.setPointSize);
   const setPointBudget = usePointCloudStore((state) => state.setPointBudget);
+  const setUseLOD = usePointCloudStore((state) => state.setUseLOD);
   const toggleGrid = usePointCloudStore((state) => state.toggleGrid);
   const toggleBounds = usePointCloudStore((state) => state.toggleBounds);
   const toggleStats = usePointCloudStore((state) => state.toggleStats);
@@ -93,6 +96,24 @@ export function ControlPanel() {
             onChange={(e) => setPointBudget(parseInt(e.target.value))}
             className="w-full"
           />
+        </div>
+
+        {/* LOD Method */}
+        <div>
+          <label className="block text-xs font-medium mb-1">LOD Method</label>
+          <select
+            value={useLOD}
+            onChange={(e) => setUseLOD(e.target.value as 'simple' | 'octree')}
+            className="w-full px-2 py-1 border rounded text-xs dark:bg-gray-700 dark:border-gray-600"
+          >
+            <option value="simple">Simple (Uniform Skip)</option>
+            <option value="octree">Octree (Distance-based)</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            {useLOD === 'simple'
+              ? 'Fast, uniform point reduction'
+              : 'Smart, distance-based LOD'}
+          </p>
         </div>
 
         {/* Toggle Buttons */}

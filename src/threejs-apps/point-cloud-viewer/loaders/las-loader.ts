@@ -110,6 +110,18 @@ export async function parseLAS(
     };
   } catch (error) {
     console.error('Error loading LAS/LAZ file:', error);
-    throw new Error(`Failed to load LAS/LAZ file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    // Check if it's a version issue
+    if (errorMessage.includes('version') || errorMessage.includes('1.3')) {
+      throw new Error(
+        `LAS/LAZ version not supported: This viewer supports LAS/LAZ versions 1.0-1.3. ` +
+        `Your file appears to be version 1.4 or higher. ` +
+        `Please convert to LAS 1.2 or 1.3 using tools like 'las2las' from LAStools: ` +
+        `las2las -i input.laz -o output.laz -set_version 1.2`
+      );
+    }
+
+    throw new Error(`Failed to load LAS/LAZ file: ${errorMessage}`);
   }
 }
