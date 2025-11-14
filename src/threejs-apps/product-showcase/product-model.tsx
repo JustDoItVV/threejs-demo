@@ -33,22 +33,18 @@ export function ProductModel({
     if (!groupRef.current) return;
 
     Object.entries(componentSettings).forEach(([meshId, settings]) => {
-      const mesh = groupRef.current?.children.find((child) => {
-        if (child instanceof THREE.Group) {
-          let found: THREE.Mesh | null = null;
-          child.traverse((c) => {
-            if (c instanceof THREE.Mesh && c.userData.meshId === meshId) {
-              found = c;
-            }
-          });
-          return found;
+      // Find mesh by traversing the entire group
+      let foundMesh: THREE.Mesh | null = null;
+      groupRef.current?.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.userData.meshId === meshId) {
+          foundMesh = child;
         }
-        return child instanceof THREE.Mesh && child.userData.meshId === meshId;
       });
 
-      if (!mesh || !(mesh instanceof THREE.Mesh)) return;
+      if (!foundMesh) return;
 
       // Handle texture loading
+      const mesh = foundMesh;
       if (settings.texture) {
         // Check if texture is already loaded
         if (!loadedTextures.current.has(settings.texture)) {

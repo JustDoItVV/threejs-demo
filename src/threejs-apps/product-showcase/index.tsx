@@ -5,11 +5,10 @@ import { useState, useCallback } from 'react';
 import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { CameraControls, CameraType } from './camera-controls';
 import { Environment } from './environment';
-import { MaterialControls } from './material-controls';
-import { ModelComponentsPanel, ComponentMaterialSettings } from './model-components-panel';
-import { ModelUploadControls } from './model-upload-controls';
+import { UnifiedControls } from './unified-controls';
 import { ProductModel } from './product-model';
 import { ModelSource, ModelMesh } from './model-loader';
+import { ComponentMaterialSettings } from './model-components-panel';
 
 export function ProductShowcase() {
   // Camera state
@@ -116,27 +115,18 @@ export function ProductShowcase() {
         />
       </CanvasWrapper>
 
-      {/* Error Display */}
-      {modelError && (
-        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-20 bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-lg shadow-lg max-w-md">
-          <p className="text-sm font-medium">Error loading model</p>
-          <p className="text-xs mt-1">{modelError}</p>
-        </div>
-      )}
-
-      {/* Model Upload Controls - Left Side */}
-      <ModelUploadControls onModelSelect={handleModelSelect} currentModel={currentModelId} />
-
-      {/* Camera Controls - Top Right */}
-      <MaterialControls cameraType={cameraType} onCameraTypeChange={setCameraType} />
-
-      {/* Model Components Panel - Bottom Right */}
-      <ModelComponentsPanel
+      {/* Unified Controls Panel */}
+      <UnifiedControls
+        onModelSelect={handleModelSelect}
+        currentModel={currentModelId}
+        modelError={modelError}
+        cameraType={cameraType}
+        onCameraTypeChange={setCameraType}
         meshes={meshes}
-        onMeshSelect={setSelectedMeshId}
         selectedMeshId={selectedMeshId}
-        onMaterialChange={handleMaterialChange}
+        onMeshSelect={setSelectedMeshId}
         currentSettings={componentSettings}
+        onMaterialChange={handleMaterialChange}
       />
     </div>
   );
