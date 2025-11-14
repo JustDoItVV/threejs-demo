@@ -76,6 +76,26 @@ interface PointCloudStore {
   reset: () => void;
 }
 
+// Custom serializer for devtools to avoid JSON.stringify errors with large Float32Arrays
+const devtoolsOptions = {
+  name: 'PointCloudStore',
+  serialize: {
+    options: {
+      replacer: (_key: string, value: unknown) => {
+        // Replace Float32Array with metadata to avoid serialization errors
+        if (value instanceof Float32Array) {
+          return {
+            __type: 'Float32Array',
+            length: value.length,
+            preview: `Float32Array(${value.length})`,
+          };
+        }
+        return value;
+      },
+    },
+  },
+};
+
 export const usePointCloudStore = create<PointCloudStore>()(
   devtools(
     (set) => ({
@@ -189,7 +209,7 @@ export const usePointCloudStore = create<PointCloudStore>()(
           showStats: true,
         }),
     }),
-    { name: 'PointCloudStore' }
+    devtoolsOptions
   )
 );
 
