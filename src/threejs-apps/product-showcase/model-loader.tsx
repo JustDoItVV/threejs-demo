@@ -108,6 +108,20 @@ function useFBXModel(url: string | null) {
 // Hook for loading OBJ models from URL
 function useOBJModel(url: string | null) {
   const model = useLoader(OBJLoader, url || '');
+
+  // Apply default material to OBJ models
+  useEffect(() => {
+    if (model) {
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+            child.material = new THREE.MeshStandardMaterial({ color: 0x808080 });
+          }
+        }
+      });
+    }
+  }, [model]);
+
   return model;
 }
 
@@ -127,7 +141,9 @@ export function ModelLoader({ source, onMeshesExtracted, onLoadError, children }
   // Load model based on source type and format
   useEffect(() => {
     if (!source) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setScene(null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setObjectUrl(null);
       return;
     }
@@ -156,28 +172,24 @@ export function ModelLoader({ source, onMeshesExtracted, onLoadError, children }
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [source]);
+  }, [source, objectUrl, onLoadError]);
 
-  // Load model using appropriate loader
-  let loadedScene: THREE.Object3D | null = null;
+  // Load model using appropriate loader - always call hooks unconditionally
+  const gltfScene = useGLTFModel(objectUrl && (source?.format === 'gltf' || source?.format === 'glb') ? objectUrl : null);
+  const fbxScene = useFBXModel(objectUrl && source?.format === 'fbx' ? objectUrl : null);
+  const objScene = useOBJModel(objectUrl && source?.format === 'obj' ? objectUrl : null);
 
-  try {
-    if (objectUrl) {
-      if (source?.format === 'gltf' || source?.format === 'glb') {
-        loadedScene = useGLTFModel(objectUrl);
-      } else if (source?.format === 'fbx') {
-        loadedScene = useFBXModel(objectUrl);
-      } else if (source?.format === 'obj') {
-        loadedScene = useOBJModel(objectUrl);
-      }
-    }
-  } catch (error) {
-    onLoadError?.(`Failed to parse model: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  // Determine which scene to use based on format
+  const loadedScene =
+    (source?.format === 'gltf' || source?.format === 'glb') ? gltfScene :
+    source?.format === 'fbx' ? fbxScene :
+    source?.format === 'obj' ? objScene :
+    null;
 
   // Extract meshes when scene is loaded
   useEffect(() => {
     if (loadedScene) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setScene(loadedScene);
       const meshes = extractMeshes(loadedScene);
       onMeshesExtracted?.(meshes);

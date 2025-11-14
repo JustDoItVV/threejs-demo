@@ -9,7 +9,7 @@ import { ComponentMaterialSettings } from './model-components-panel';
 
 interface ProductModelProps {
   modelSource: ModelSource | null;
-  onMeshesExtracted?: (meshes: ModelMesh[]) => void;
+  onMeshesExtracted?: (meshes: ModelMesh[], boundingBox?: THREE.Box3) => void;
   onLoadError?: (error: string) => void;
   componentSettings: Record<string, ComponentMaterialSettings>;
   selectedMeshId: string | null;
@@ -76,21 +76,30 @@ export function ProductModel({
 
     groupRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        const material = Array.isArray(child.material) ? child.material[0] : child.material;
+
         if (child.userData.meshId === selectedMeshId) {
           // Highlight selected mesh
-          child.userData.originalEmissive = child.userData.originalEmissive || (child.material as any).emissive?.clone();
-          if ((child.material as any).emissive) {
-            (child.material as any).emissive = new THREE.Color(0x444444);
-            (child.material as any).emissiveIntensity = 0.2;
+          if (material instanceof THREE.MeshStandardMaterial) {
+            child.userData.originalEmissive = child.userData.originalEmissive || material.emissive?.clone();
+            if (material.emissive) {
+              material.emissive = new THREE.Color(0x444444);
+              material.emissiveIntensity = 0.2;
+            }
           }
         } else {
           // Restore original emissive
-          if (child.userData.originalEmissive && (child.material as any).emissive) {
-            (child.material as any).emissive = child.userData.originalEmissive;
-            (child.material as any).emissiveIntensity = 0;
+          if (material instanceof THREE.MeshStandardMaterial) {
+            if (child.userData.originalEmissive && material.emissive) {
+              material.emissive = child.userData.originalEmissive;
+              material.emissiveIntensity = 0;
+            }
           }
         }
-        (child.material as any).needsUpdate = true;
+
+        if (material) {
+          material.needsUpdate = true;
+        }
       }
     });
   }, [selectedMeshId]);
@@ -125,7 +134,14 @@ export function ProductModel({
       meshData.mesh.userData.meshId = meshData.id;
     });
 
-    onMeshesExtracted?.(filteredMeshes);
+    // Calculate bounding box for the entire model
+    const boundingBox = new THREE.Box3();
+    filteredMeshes.forEach((meshData) => {
+      const meshBox = new THREE.Box3().setFromObject(meshData.mesh);
+      boundingBox.union(meshBox);
+    });
+
+    onMeshesExtracted?.(filteredMeshes, boundingBox);
   };
 
   if (!modelSource) {
@@ -168,7 +184,7 @@ function applyMaterialSettings(
 // Default iPhone model component
 interface DefaultIPhoneModelProps {
   removeScreen: boolean;
-  onMeshesExtracted: (meshes: ModelMesh[]) => void;
+  onMeshesExtracted: (meshes: ModelMesh[], boundingBox?: THREE.Box3) => void;
 }
 
 function DefaultIPhoneModel({ removeScreen, onMeshesExtracted }: DefaultIPhoneModelProps) {
@@ -211,7 +227,14 @@ function DefaultIPhoneModel({ removeScreen, onMeshesExtracted }: DefaultIPhoneMo
       }
     });
 
-    onMeshesExtracted(meshes);
+    // Calculate bounding box
+    const boundingBox = new THREE.Box3();
+    meshes.forEach((meshData) => {
+      const meshBox = new THREE.Box3().setFromObject(meshData.mesh);
+      boundingBox.union(meshBox);
+    });
+
+    onMeshesExtracted(meshes, boundingBox);
   }, [scene, removeScreen, onMeshesExtracted]);
 
   return (

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import * as THREE from 'three';
 
+import { Stats } from '@react-three/drei';
 import { CanvasWrapper } from '../../components/three/canvas-wrapper';
 import { CameraControls, CameraType } from './camera-controls';
 import { Environment } from './environment';
@@ -13,6 +15,7 @@ import { ComponentMaterialSettings } from './model-components-panel';
 export function ProductShowcase() {
   // Camera state
   const [cameraType, setCameraType] = useState<CameraType>('perspective');
+  const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
 
   // Model state
   const [modelSource, setModelSource] = useState<ModelSource | null>(null);
@@ -47,8 +50,13 @@ export function ProductShowcase() {
   }, []);
 
   // Handle meshes extraction
-  const handleMeshesExtracted = useCallback((extractedMeshes: ModelMesh[]) => {
+  const handleMeshesExtracted = useCallback((extractedMeshes: ModelMesh[], boundingBox?: THREE.Box3) => {
     setMeshes(extractedMeshes);
+
+    // Store bounding box if provided
+    if (boundingBox) {
+      setModelBounds(boundingBox);
+    }
 
     // Initialize default settings for all meshes
     const defaultSettings: Record<string, ComponentMaterialSettings> = {};
@@ -62,14 +70,12 @@ export function ProductShowcase() {
       let metalness = 0.5;
       let roughness = 0.5;
 
-      if (material && 'color' in material) {
-        color = `#${(material as any).color.getHexString()}`;
-      }
-      if (material && 'metalness' in material) {
-        metalness = (material as any).metalness;
-      }
-      if (material && 'roughness' in material) {
-        roughness = (material as any).roughness;
+      if (material instanceof THREE.MeshStandardMaterial) {
+        if (material.color) {
+          color = `#${material.color.getHexString()}`;
+        }
+        metalness = material.metalness;
+        roughness = material.roughness;
       }
 
       defaultSettings[mesh.id] = {
@@ -104,7 +110,7 @@ export function ProductShowcase() {
       {/* 3D Canvas */}
       <CanvasWrapper>
         <Environment />
-        <CameraControls cameraType={cameraType} onCameraTypeChange={setCameraType} />
+        <CameraControls cameraType={cameraType} onCameraTypeChange={setCameraType} modelBounds={modelBounds} />
         <ProductModel
           modelSource={modelSource}
           onMeshesExtracted={handleMeshesExtracted}
@@ -113,6 +119,8 @@ export function ProductShowcase() {
           selectedMeshId={selectedMeshId}
           removeScreenForIPhone={true}
         />
+        {/* Performance Stats */}
+        <Stats className="stats-panel" />
       </CanvasWrapper>
 
       {/* Unified Controls Panel */}
@@ -127,6 +135,7 @@ export function ProductShowcase() {
         onMeshSelect={setSelectedMeshId}
         currentSettings={componentSettings}
         onMaterialChange={handleMaterialChange}
+        modelBounds={modelBounds}
       />
     </div>
   );

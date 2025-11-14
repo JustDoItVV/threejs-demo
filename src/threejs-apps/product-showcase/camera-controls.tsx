@@ -11,15 +11,17 @@ export type CameraType = 'perspective' | 'orthographic';
 interface CameraControlsProps {
   cameraType?: CameraType;
   onCameraTypeChange?: (type: CameraType) => void;
+  modelBounds?: THREE.Box3 | null;
 }
 
-export function CameraControls({ cameraType = 'perspective', onCameraTypeChange }: CameraControlsProps) {
+export function CameraControls({ cameraType = 'perspective', onCameraTypeChange, modelBounds }: CameraControlsProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const perspectiveCameraRef = useRef<THREE.PerspectiveCamera>(null);
   const orthographicCameraRef = useRef<THREE.OrthographicCamera>(null);
   const { camera, size } = useThree();
   const [enabled, setEnabled] = useState(true);
+  const [initialSetup, setInitialSetup] = useState(false);
 
   const moveCameraTo = (
     position: [number, number, number],
@@ -60,6 +62,47 @@ export function CameraControls({ cameraType = 'perspective', onCameraTypeChange 
     const newType = cameraType === 'perspective' ? 'orthographic' : 'perspective';
     onCameraTypeChange?.(newType);
   };
+
+  // Auto-adjust camera based on model bounds
+  useEffect(() => {
+    if (!modelBounds || !controlsRef.current || initialSetup) return;
+
+    const activeCamera = cameraType === 'perspective' ? perspectiveCameraRef.current : orthographicCameraRef.current;
+    if (!activeCamera) return;
+
+    // Get model center and size
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    modelBounds.getCenter(center);
+    modelBounds.getSize(size);
+
+    // Calculate appropriate camera distance
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = cameraType === 'perspective' ? 50 : 45;
+    const cameraDistance = maxDim / (2 * Math.tan((fov * Math.PI) / 360)) * 1.5;
+
+    // Set camera position and target
+    const position = new THREE.Vector3(
+      center.x + cameraDistance * 0.5,
+      center.y + cameraDistance * 0.5,
+      center.z + cameraDistance
+    );
+
+    activeCamera.position.copy(position);
+    controlsRef.current.target.copy(center);
+    controlsRef.current.minDistance = maxDim * 0.5;
+    controlsRef.current.maxDistance = maxDim * 3;
+    controlsRef.current.update();
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInitialSetup(true);
+  }, [modelBounds, cameraType, initialSetup]);
+
+  // Reset initial setup when model bounds change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInitialSetup(false);
+  }, [modelBounds]);
 
   // Expose functions to window for external access
   useEffect(() => {

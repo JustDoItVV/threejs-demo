@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import * as THREE from 'three';
 
 import { getAssetPath } from '@/ui/utils';
 import { Button } from '@/ui/button';
@@ -60,6 +61,7 @@ interface UnifiedControlsProps {
   // Camera
   cameraType: CameraType;
   onCameraTypeChange: (type: CameraType) => void;
+  modelBounds?: THREE.Box3 | null;
 
   // Components
   meshes: ModelMesh[];
@@ -75,6 +77,7 @@ export function UnifiedControls({
   modelError,
   cameraType,
   onCameraTypeChange,
+  modelBounds,
   meshes,
   selectedMeshId,
   onMeshSelect,
@@ -147,19 +150,57 @@ export function UnifiedControls({
   const handleCameraPreset = (preset: string) => {
     if (typeof window === 'undefined' || !window.moveCameraTo) return;
 
-    switch (preset) {
-      case 'front':
-        window.moveCameraTo([0, 2.1, 6], [0, 2.1, 0]);
-        break;
-      case 'side':
-        window.moveCameraTo([6, 2.1, 0], [0, 2.1, 0]);
-        break;
-      case 'top':
-        window.moveCameraTo([0, 6, 0.1], [0, 0, 0]);
-        break;
-      case 'angle':
-        window.moveCameraTo([3, 3, 6], [0, 2.1, 0]);
-        break;
+    // Use dynamic positions based on model bounds if available
+    if (modelBounds) {
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      modelBounds.getCenter(center);
+      modelBounds.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const distance = maxDim * 1.5;
+
+      switch (preset) {
+        case 'front':
+          window.moveCameraTo(
+            [center.x, center.y, center.z + distance],
+            [center.x, center.y, center.z]
+          );
+          break;
+        case 'side':
+          window.moveCameraTo(
+            [center.x + distance, center.y, center.z],
+            [center.x, center.y, center.z]
+          );
+          break;
+        case 'top':
+          window.moveCameraTo(
+            [center.x, center.y + distance, center.z + maxDim * 0.1],
+            [center.x, center.y, center.z]
+          );
+          break;
+        case 'angle':
+          window.moveCameraTo(
+            [center.x + distance * 0.5, center.y + distance * 0.5, center.z + distance],
+            [center.x, center.y, center.z]
+          );
+          break;
+      }
+    } else {
+      // Fallback to default positions
+      switch (preset) {
+        case 'front':
+          window.moveCameraTo([0, 2.1, 6], [0, 2.1, 0]);
+          break;
+        case 'side':
+          window.moveCameraTo([6, 2.1, 0], [0, 2.1, 0]);
+          break;
+        case 'top':
+          window.moveCameraTo([0, 6, 0.1], [0, 0, 0]);
+          break;
+        case 'angle':
+          window.moveCameraTo([3, 3, 6], [0, 2.1, 0]);
+          break;
+      }
     }
   };
 
