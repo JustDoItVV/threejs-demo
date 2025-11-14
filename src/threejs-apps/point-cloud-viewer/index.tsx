@@ -13,7 +13,7 @@ export function PointCloudViewer() {
   useKeyboardControls();
 
   return (
-    <div className="relative w-full h-full bg-gray-900">
+    <div id="point-cloud-viewer-container" className="relative w-full h-full bg-gray-900">
       {/* Three.js Canvas */}
       <CanvasWrapper className="bg-gray-900">
         <PointCloudScene />

@@ -19,10 +19,13 @@ export function ViewModeButtons() {
   }, []);
 
   const handleFullscreen = async () => {
+    const container = document.getElementById('point-cloud-viewer-container');
+    if (!container) return;
+
     if (!document.fullscreenElement) {
       // Enter fullscreen
       try {
-        await document.documentElement.requestFullscreen();
+        await container.requestFullscreen();
       } catch (error) {
         console.error('Error entering fullscreen:', error);
       }
@@ -37,40 +40,27 @@ export function ViewModeButtons() {
   };
 
   const handleFullWindow = () => {
-    // Toggle full window mode by applying CSS to html element
-    const htmlElement = document.documentElement;
+    const container = document.getElementById('point-cloud-viewer-container');
+    if (!container) return;
 
     if (!isFullWindow) {
       // Enter full window mode
-      htmlElement.style.overflow = 'hidden';
-      htmlElement.style.height = '100vh';
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-      document.body.style.margin = '0';
-
-      // Find the project page container and make it full height
-      const mainContent = document.querySelector('main');
-      if (mainContent instanceof HTMLElement) {
-        mainContent.style.height = '100vh';
-        mainContent.style.margin = '0';
-        mainContent.style.padding = '0';
-      }
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+      container.style.zIndex = '50';
 
       setIsFullWindow(true);
     } else {
       // Exit full window mode
-      htmlElement.style.overflow = '';
-      htmlElement.style.height = '';
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-      document.body.style.margin = '';
-
-      const mainContent = document.querySelector('main');
-      if (mainContent instanceof HTMLElement) {
-        mainContent.style.height = '';
-        mainContent.style.margin = '';
-        mainContent.style.padding = '';
-      }
+      container.style.position = '';
+      container.style.top = '';
+      container.style.left = '';
+      container.style.width = '';
+      container.style.height = '';
+      container.style.zIndex = '';
 
       setIsFullWindow(false);
     }
