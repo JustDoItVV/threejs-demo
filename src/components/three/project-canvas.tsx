@@ -38,6 +38,11 @@ const RogueGame = dynamic(
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
+const PointCloudViewer = dynamic(
+  () => import('../../threejs-apps/point-cloud-viewer').then((mod) => ({ default: mod.PointCloudViewer })),
+  { ssr: false, loading: () => <LoadingCanvas /> }
+);
+
 export function ProjectCanvas({ slug }: ProjectCanvasProps) {
   return (
     <ErrorBoundary>
@@ -51,6 +56,8 @@ export function ProjectCanvas({ slug }: ProjectCanvasProps) {
             return <InteractiveGame />;
           case 'rogue':
             return <RogueGame />;
+          case 'point-cloud-viewer':
+            return <PointCloudViewer />;
           default:
             return (
               <div className="w-full h-full flex items-center justify-center">
