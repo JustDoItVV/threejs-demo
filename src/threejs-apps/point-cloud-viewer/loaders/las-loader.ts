@@ -113,12 +113,18 @@ export async function parseLAS(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     // Check if it's a version issue
-    if (errorMessage.includes('version') || errorMessage.includes('1.3')) {
+    if (errorMessage.includes('version') || errorMessage.includes('1.3') || errorMessage.includes('1.4')) {
       throw new Error(
-        `LAS/LAZ version not supported: This viewer supports LAS/LAZ versions 1.0-1.3. ` +
-        `Your file appears to be version 1.4 or higher. ` +
-        `Please convert to LAS 1.2 or 1.3 using tools like 'las2las' from LAStools: ` +
-        `las2las -i input.laz -o output.laz -set_version 1.2`
+        `LAS/LAZ version not supported.\n\n` +
+        `This viewer supports LAS/LAZ versions 1.0-1.3 only.\n` +
+        `Your file appears to be version 1.4+.\n\n` +
+        `To convert your file:\n` +
+        `1. Download LAStools: https://rapidlasso.de/lastools/\n` +
+        `2. Run: las2las -i input.laz -o output.laz -set_version 1.2\n\n` +
+        `Alternative online converters:\n` +
+        `- CloudCompare (free): https://www.cloudcompare.org/\n` +
+        `- PDAL: https://pdal.io/\n\n` +
+        `Or use PTS format instead (simpler text format).`
       );
     }
 

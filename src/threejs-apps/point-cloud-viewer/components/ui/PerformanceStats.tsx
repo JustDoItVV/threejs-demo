@@ -90,7 +90,7 @@ export function PerformanceStats() {
   };
 
   return (
-    <div className="absolute bottom-4 left-4 bg-black/80 text-white p-3 rounded-lg font-mono text-xs space-y-1 min-w-[180px] z-10">
+    <div className="absolute top-4 left-4 bg-black/80 text-white p-3 rounded-lg font-mono text-xs space-y-1 min-w-[180px] z-10">
       <div className="flex justify-between items-center border-b border-white/20 pb-1 mb-2">
         <span className="font-bold">Performance</span>
         <button
