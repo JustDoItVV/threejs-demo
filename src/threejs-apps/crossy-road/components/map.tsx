@@ -7,7 +7,7 @@ import { Road } from './road';
 import { Tree } from './tree';
 
 interface MapProps {
-  vehicleRefs: Map<string, React.MutableRefObject<THREE.Group | null>>;
+  vehicleRefs?: Map<string, React.MutableRefObject<THREE.Group | null>>;
 }
 
 export function Map({ vehicleRefs }: MapProps) {

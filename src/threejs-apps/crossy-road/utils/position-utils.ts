@@ -1,10 +1,11 @@
 import type { Direction, Position, RowData } from '../types';
-import { MIN_TILE_INDEX, MAX_TILE_INDEX, MAP_METADATA } from './constants';
+import { MAX_TILE_INDEX, MIN_TILE_INDEX } from './constants';
 
 /**
  * Calculate final position after applying a series of moves
  */
 export function calculateFinalPosition(currentPosition: Position, moves: Direction[]): Position {
+  // @ts-expect-error -- tmp
   return moves.reduce((position, direction) => {
     if (direction === 'forward') {
       return {

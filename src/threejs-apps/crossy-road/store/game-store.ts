@@ -3,10 +3,10 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { Direction, DisplayMode, GameState, Position, RowData } from '../types';
 import { MAP_METADATA } from '../utils/constants';
 import { isValidPosition } from '../utils/position-utils';
 
+import type { Direction, DisplayMode, GameState, Position, RowData } from '../types';
 interface GameStore {
   // Game state
   gameState: GameState;
@@ -129,8 +129,7 @@ export const useGameStore = create<GameStore>()(
 
         if (!direction) return;
 
-        // Update position based on direction
-        let newPosition = { ...playerPosition };
+        const newPosition = { ...playerPosition };
 
         if (direction === 'forward') {
           newPosition.currentRow += 1;

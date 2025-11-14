@@ -2,10 +2,8 @@
 
 import { useEffect } from 'react';
 
-import { OrthographicCamera } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
-
 import { CanvasWrapper } from '@/components/three/canvas-wrapper';
+import { OrthographicCamera } from '@react-three/drei';
 
 import { GameScene } from './components/game-scene';
 import { useKeyboardControls } from './hooks/use-keyboard-controls';
@@ -19,10 +17,8 @@ export function CrossyRoad() {
   const displayMode = useGameStore((state) => state.displayMode);
   const cameraZoom = useGameStore((state) => state.cameraZoom);
 
-  // Initialize keyboard controls
   useKeyboardControls();
 
-  // Handle fullscreen exit
   useEffect(() => {
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
@@ -34,7 +30,6 @@ export function CrossyRoad() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Calculate canvas dimensions based on display mode
   const canvasStyle =
     displayMode === 'fullWindow'
       ? {
@@ -56,7 +51,6 @@ export function CrossyRoad() {
         </CanvasWrapper>
       </div>
 
-      {/* UI Overlays */}
       <PerformanceStats />
       <DebugPanel />
       <StatsPanel />

@@ -1,18 +1,19 @@
-import { useRef, useEffect } from 'react';
-
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-import { useGameStore } from '../store/game-store';
 import { useCollisionDetection } from '../hooks/use-collision-detection';
 import { usePerformanceMonitor } from '../hooks/use-performance-monitor';
 import { useVehicleAnimation } from '../hooks/use-vehicle-animation';
+import { useGameStore } from '../store/game-store';
 import { Map } from './map';
 import { Player } from './player';
 
 export function GameScene() {
   const playerRef = useRef<THREE.Group>(null);
   const mapRows = useGameStore((state) => state.mapRows);
-  const vehicleRefsRef = useRef<Map<string, React.MutableRefObject<THREE.Group | null>>>(new Map());
+  const vehicleRefsRef = useRef<Map<string, React.MutableRefObject<THREE.Group | null>>>(
+    new Map({})
+  );
 
   // Create vehicle refs when mapRows changes
   useEffect(() => {

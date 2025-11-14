@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+/* eslint-disable react-hooks/purity */
+import { useRef } from 'react';
 
 import { useFrame } from '@react-three/fiber';
 

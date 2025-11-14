@@ -5,7 +5,6 @@ import { useCallback } from 'react';
 import { Card } from '@/libs/ui/card';
 
 import { useGameStore } from '../store/game-store';
-import type { DisplayMode } from '../types';
 
 export function StatsPanel() {
   const score = useGameStore((state) => state.score);
