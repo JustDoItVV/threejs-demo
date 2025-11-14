@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import {
@@ -19,22 +18,6 @@ export function PointCloudScene() {
   const pointCloud = usePointCloudStore(selectPointCloud);
   const showBounds = usePointCloudStore(selectShowBounds);
   const showGrid = usePointCloudStore(selectShowGrid);
-
-  const originalUpRef = useRef(new THREE.Vector3());
-
-  // Set Z-up coordinate system
-  useEffect(() => {
-    // Save original DEFAULT_UP
-    originalUpRef.current.copy(THREE.Object3D.DEFAULT_UP);
-
-    // Set Z-up coordinate system for point clouds
-    THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
-
-    // Restore on unmount
-    return () => {
-      THREE.Object3D.DEFAULT_UP.copy(originalUpRef.current);
-    };
-  }, []);
 
   // Calculate grid size based on point cloud bounds
   const gridSize = pointCloud
@@ -59,12 +42,11 @@ export function PointCloudScene() {
       <directionalLight position={[100, 100, 100]} intensity={0.8} />
       <hemisphereLight args={['#ffffff', '#444444', 0.4]} />
 
-      {/* Grid Helper (XY plane for Z-up) */}
+      {/* Grid Helper (XZ plane, Y-up) */}
       {showGrid && (
         <>
           <gridHelper
             args={[gridSize, 50, '#555555', '#333333']}
-            rotation={[Math.PI / 2, 0, 0]}
             position={[0, 0, 0]}
           />
           <axesHelper args={[gridSize / 4]} />
