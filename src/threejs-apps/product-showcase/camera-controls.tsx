@@ -12,16 +12,17 @@ interface CameraControlsProps {
   cameraType?: CameraType;
   onCameraTypeChange?: (type: CameraType) => void;
   modelBounds?: THREE.Box3 | null;
+  modelId?: string | null;
 }
 
-export function CameraControls({ cameraType = 'perspective', onCameraTypeChange, modelBounds }: CameraControlsProps) {
+export function CameraControls({ cameraType = 'perspective', onCameraTypeChange, modelBounds, modelId }: CameraControlsProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const perspectiveCameraRef = useRef<THREE.PerspectiveCamera>(null);
   const orthographicCameraRef = useRef<THREE.OrthographicCamera>(null);
   const { camera, size } = useThree();
   const [enabled, setEnabled] = useState(true);
-  const [initialSetup, setInitialSetup] = useState(false);
+  const lastModelIdRef = useRef<string | null>(null);
 
   const moveCameraTo = (
     position: [number, number, number],
@@ -63,9 +64,11 @@ export function CameraControls({ cameraType = 'perspective', onCameraTypeChange,
     onCameraTypeChange?.(newType);
   };
 
-  // Auto-adjust camera based on model bounds
+  // Auto-adjust camera based on model bounds - only when model changes
   useEffect(() => {
-    if (!modelBounds || !controlsRef.current || initialSetup) return;
+    // Only adjust camera when a new model is loaded (modelId changed)
+    if (!modelBounds || !controlsRef.current || !modelId) return;
+    if (lastModelIdRef.current === modelId) return;
 
     const activeCamera = cameraType === 'perspective' ? perspectiveCameraRef.current : orthographicCameraRef.current;
     if (!activeCamera) return;
@@ -94,15 +97,9 @@ export function CameraControls({ cameraType = 'perspective', onCameraTypeChange,
     controlsRef.current.maxDistance = maxDim * 3;
     controlsRef.current.update();
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setInitialSetup(true);
-  }, [modelBounds, cameraType, initialSetup]);
-
-  // Reset initial setup when model bounds change
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setInitialSetup(false);
-  }, [modelBounds]);
+    // Remember this model ID
+    lastModelIdRef.current = modelId;
+  }, [modelBounds, cameraType, modelId]);
 
   // Expose functions to window for external access
   useEffect(() => {

@@ -37,15 +37,15 @@ export function ProductShowcase() {
     setSelectedMeshId(null);
     setComponentSettings({});
 
-    // Set current model ID based on source
+    // Set current model ID based on source with timestamp to ensure uniqueness
     if (source.type === 'url' && typeof source.data === 'string') {
       if (source.data.includes('iphone')) {
         setCurrentModelId('iphone-14');
       } else {
-        setCurrentModelId('custom');
+        setCurrentModelId(`custom-url-${Date.now()}`);
       }
     } else {
-      setCurrentModelId('custom');
+      setCurrentModelId(`custom-file-${Date.now()}`);
     }
   }, []);
 
@@ -110,7 +110,7 @@ export function ProductShowcase() {
       {/* 3D Canvas */}
       <CanvasWrapper>
         <Environment />
-        <CameraControls cameraType={cameraType} onCameraTypeChange={setCameraType} modelBounds={modelBounds} />
+        <CameraControls cameraType={cameraType} onCameraTypeChange={setCameraType} modelBounds={modelBounds} modelId={currentModelId} />
         <ProductModel
           modelSource={modelSource}
           onMeshesExtracted={handleMeshesExtracted}
