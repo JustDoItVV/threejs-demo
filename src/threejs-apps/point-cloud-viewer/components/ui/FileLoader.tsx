@@ -5,20 +5,23 @@ import { useEffect, useState } from 'react';
 import { usePointCloudWorker } from '../../hooks/usePointCloudWorker';
 import { selectIsLoading, selectShowFileLoader, usePointCloudStore } from '../../store/point-cloud-store';
 import { downloadFromGoogleDrive, downloadFromURL, downloadFromYandexDisk } from '../../utils/cloud-storage';
-import { checkFileSize } from '../../utils/point-cloud-optimizer';
+import { applyLOD, checkFileSize } from '../../utils/point-cloud-optimizer';
 import { VIEWER_CONFIG } from '../../config/viewer.config';
+import { PointCloudData } from '../../types';
 
 type LoadSource = 'local' | 'url' | 'yandex' | 'google';
 
 export function FileLoader() {
   const showFileLoader = usePointCloudStore(selectShowFileLoader);
   const isLoading = usePointCloudStore(selectIsLoading);
+  const pointBudget = usePointCloudStore((state) => state.pointBudget);
   const toggleFileLoader = usePointCloudStore((state) => state.toggleFileLoader);
   const setPointCloud = usePointCloudStore((state) => state.setPointCloud);
   const setLoading = usePointCloudStore((state) => state.setLoading);
   const setLoadingProgress = usePointCloudStore((state) => state.setLoadingProgress);
   const setError = usePointCloudStore((state) => state.setError);
   const setMetrics = usePointCloudStore((state) => state.setMetrics);
+  const setPointBudget = usePointCloudStore((state) => state.setPointBudget);
 
   const [activeTab, setActiveTab] = useState<LoadSource>('local');
   const [urlInput, setUrlInput] = useState('');
@@ -59,10 +62,45 @@ export function FileLoader() {
         (data) => {
           const loadTime = performance.now() - startTime;
 
-          setPointCloud(data);
+          // Auto-downsample large files to prevent memory issues
+          let processedData = data;
+          const originalCount = data.count;
+
+          // If file has more than 2M points, automatically downsample
+          if (data.count > 2000000) {
+            console.warn(`Large point cloud detected (${data.count.toLocaleString()} points). Auto-downsampling...`);
+
+            // Use aggressive downsampling for very large files
+            const targetBudget = Math.min(pointBudget, 1000000); // Max 1M points for large files
+
+            // Apply LOD without camera (uniform downsampling)
+            const lodResult = applyLOD(
+              data.points,
+              data.colors,
+              { x: 0, y: 0, z: 0 } as any, // Dummy camera position
+              { x: 0, y: 0, z: 0 } as any, // Dummy center
+              targetBudget
+            );
+
+            processedData = {
+              ...data,
+              points: lodResult.positions,
+              colors: lodResult.colors,
+              count: lodResult.count,
+            };
+
+            // Adjust point budget if needed
+            if (pointBudget > 1000000) {
+              setPointBudget(1000000);
+            }
+
+            console.log(`Downsampled from ${originalCount.toLocaleString()} to ${processedData.count.toLocaleString()} points`);
+          }
+
+          setPointCloud(processedData);
           setMetrics({
-            totalPoints: data.count,
-            visiblePoints: data.count,
+            totalPoints: originalCount,
+            visiblePoints: processedData.count,
             fileSize: file.size,
             loadTime,
             format: data.format,

@@ -68,6 +68,11 @@ export function InfoPanel() {
             <span className="text-gray-600 dark:text-gray-400">Visible Points:</span>
             <span className="font-mono">{formatNumber(metrics.visiblePoints)}</span>
           </div>
+          {metrics.totalPoints > metrics.visiblePoints && (
+            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 italic">
+              ⚠ Auto-downsampled for performance ({((metrics.visiblePoints / metrics.totalPoints) * 100).toFixed(1)}% shown)
+            </div>
+          )}
           <div className="flex justify-between gap-4">
             <span className="text-gray-600 dark:text-gray-400">File Size:</span>
             <span className="font-mono">{formatFileSize(metrics.fileSize)}</span>

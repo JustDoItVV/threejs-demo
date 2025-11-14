@@ -79,16 +79,19 @@ interface PointCloudStore {
 // Custom serializer for devtools to avoid JSON.stringify errors with large Float32Arrays
 const devtoolsOptions = {
   name: 'PointCloudStore',
+  enabled: process.env.NODE_ENV === 'development',
   serialize: {
     options: {
+      // Prevent serialization of large objects
+      maxDepth: 2,
       replacer: (_key: string, value: unknown) => {
         // Replace Float32Array with metadata to avoid serialization errors
         if (value instanceof Float32Array) {
-          return {
-            __type: 'Float32Array',
-            length: value.length,
-            preview: `Float32Array(${value.length})`,
-          };
+          return `[Float32Array: ${value.length} elements]`;
+        }
+        // Also handle regular arrays that are too large
+        if (Array.isArray(value) && value.length > 1000) {
+          return `[Array: ${value.length} elements]`;
         }
         return value;
       },
