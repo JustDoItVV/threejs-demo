@@ -6,6 +6,7 @@ import { usePointCloudWorker } from '../../hooks/usePointCloudWorker';
 import { selectIsLoading, selectShowFileLoader, usePointCloudStore } from '../../store/point-cloud-store';
 import { downloadFromGoogleDrive, downloadFromURL, downloadFromYandexDisk } from '../../utils/cloud-storage';
 import { applyLOD, checkFileSize } from '../../utils/point-cloud-optimizer';
+import { fitCameraToPointCloud, getBoundsInfo } from '../../utils/camera-utils';
 import { VIEWER_CONFIG } from '../../config/viewer.config';
 import { PointCloudData } from '../../types';
 
@@ -15,6 +16,7 @@ export function FileLoader() {
   const showFileLoader = usePointCloudStore(selectShowFileLoader);
   const isLoading = usePointCloudStore(selectIsLoading);
   const pointBudget = usePointCloudStore((state) => state.pointBudget);
+  const cameraMode = usePointCloudStore((state) => state.cameraMode);
   const toggleFileLoader = usePointCloudStore((state) => state.toggleFileLoader);
   const setPointCloud = usePointCloudStore((state) => state.setPointCloud);
   const setLoading = usePointCloudStore((state) => state.setLoading);
@@ -22,6 +24,8 @@ export function FileLoader() {
   const setError = usePointCloudStore((state) => state.setError);
   const setMetrics = usePointCloudStore((state) => state.setMetrics);
   const setPointBudget = usePointCloudStore((state) => state.setPointBudget);
+  const updateOrthographicConfig = usePointCloudStore((state) => state.updateOrthographicConfig);
+  const updateFirstPersonConfig = usePointCloudStore((state) => state.updateFirstPersonConfig);
 
   const [activeTab, setActiveTab] = useState<LoadSource>('local');
   const [urlInput, setUrlInput] = useState('');
@@ -95,6 +99,24 @@ export function FileLoader() {
             }
 
             console.log(`Downsampled from ${originalCount.toLocaleString()} to ${processedData.count.toLocaleString()} points`);
+          }
+
+          // Get bounding box info for debugging
+          const boundsInfo = getBoundsInfo(processedData);
+          console.log('Point cloud bounds:', {
+            size: boundsInfo.size,
+            center: boundsInfo.center,
+            diagonal: boundsInfo.diagonal.toFixed(2),
+          });
+
+          // Auto-fit camera to point cloud
+          const cameraConfig = fitCameraToPointCloud(processedData, cameraMode);
+          if (cameraConfig.orthographicConfig) {
+            updateOrthographicConfig(cameraConfig.orthographicConfig);
+            console.log('Camera fitted (orthographic):', cameraConfig.orthographicConfig);
+          } else if (cameraConfig.firstPersonConfig) {
+            updateFirstPersonConfig(cameraConfig.firstPersonConfig);
+            console.log('Camera fitted (first-person):', cameraConfig.firstPersonConfig);
           }
 
           setPointCloud(processedData);

@@ -9,6 +9,7 @@ import {
   selectShowGrid,
   usePointCloudStore,
 } from '../../store/point-cloud-store';
+import { CursorCoordinates } from '../ui/CursorCoordinates';
 import { FirstPersonCameraController } from './FirstPersonCameraController';
 import { OrthographicCameraController } from './OrthographicCameraController';
 import { PointCloudRenderer } from './PointCloudRenderer';
@@ -55,6 +56,9 @@ export function PointCloudScene() {
 
       {/* Point Cloud */}
       {pointCloud && <PointCloudRenderer />}
+
+      {/* Cursor Coordinates */}
+      {pointCloud && <CursorCoordinates />}
 
       {/* Bounding Box */}
       {showBounds && pointCloud && (
