@@ -5,7 +5,7 @@ import { useCollisionDetection } from '../hooks/use-collision-detection';
 import { usePerformanceMonitor } from '../hooks/use-performance-monitor';
 import { useVehicleAnimation } from '../hooks/use-vehicle-animation';
 import { useGameStore } from '../store/game-store';
-import { Map } from './map';
+import { GameMap } from './map';
 import { Player } from './player';
 
 export function GameScene() {
@@ -44,7 +44,7 @@ export function GameScene() {
       <group ref={playerRef}>
         <Player />
       </group>
-      <Map vehicleRefs={vehicleRefsRef.current} />
+      <GameMap vehicleRefs={vehicleRefsRef.current} />
     </>
   );
 }

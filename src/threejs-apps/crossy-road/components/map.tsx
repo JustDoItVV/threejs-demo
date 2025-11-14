@@ -6,11 +6,11 @@ import { Grass } from './grass';
 import { Road } from './road';
 import { Tree } from './tree';
 
-interface MapProps {
-  vehicleRefs?: Map<string, React.MutableRefObject<THREE.Group | null>>;
+interface GameMapProps {
+  vehicleRefs: Map<string, React.MutableRefObject<THREE.Group | null>>;
 }
 
-export function Map({ vehicleRefs }: MapProps) {
+export function GameMap({ vehicleRefs }: GameMapProps) {
   const mapRows = useGameStore((state) => state.mapRows);
 
   return (
