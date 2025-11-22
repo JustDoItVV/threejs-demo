@@ -2,6 +2,14 @@ import { Project } from '@/types';
 
 export const Projects: Project[] = [
   {
+    slug: 'city-map',
+    title: '3D City Map',
+    description:
+      'Interactive 3D map of Moscow center (Red Square area) with switchable 2D/3D camera views. Features include real buildings with heights, roads, parks, and water. Dynamic weather system (rain, snow, fog), animated traffic, 3D landmark markers, and distance measurement tool. Built with OpenStreetMap data.',
+    thumbnail: '/projects-screens/city-map.png',
+    tags: ['Map', '3D', 'OSM', 'Interactive', 'Weather', 'Traffic', 'Measurement'],
+  },
+  {
     slug: 'rogue',
     title: 'Rogue',
     description:

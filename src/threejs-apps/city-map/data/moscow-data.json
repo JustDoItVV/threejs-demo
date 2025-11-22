@@ -1,0 +1,358 @@
+{
+  "buildings": [
+    {
+      "id": "kremlin_1",
+      "name": "Большой Кремлёвский дворец",
+      "coordinates": [
+        { "lat": 55.7515, "lon": 37.6165 },
+        { "lat": 55.7515, "lon": 37.6180 },
+        { "lat": 55.7505, "lon": 37.6180 },
+        { "lat": 55.7505, "lon": 37.6165 }
+      ],
+      "height": 47,
+      "levels": 15,
+      "type": "landmark",
+      "isLandmark": true
+    },
+    {
+      "id": "gum_1",
+      "name": "ГУМ",
+      "coordinates": [
+        { "lat": 55.7545, "lon": 37.6205 },
+        { "lat": 55.7545, "lon": 37.6220 },
+        { "lat": 55.7535, "lon": 37.6220 },
+        { "lat": 55.7535, "lon": 37.6205 }
+      ],
+      "height": 25,
+      "levels": 8,
+      "type": "commercial",
+      "isLandmark": true
+    },
+    {
+      "id": "cathedral_1",
+      "name": "Собор Василия Блаженного",
+      "coordinates": [
+        { "lat": 55.7527, "lon": 37.6228 },
+        { "lat": 55.7527, "lon": 37.6235 },
+        { "lat": 55.7520, "lon": 37.6235 },
+        { "lat": 55.7520, "lon": 37.6228 }
+      ],
+      "height": 65,
+      "levels": 20,
+      "type": "landmark",
+      "isLandmark": true
+    },
+    {
+      "id": "historical_museum",
+      "name": "Исторический музей",
+      "coordinates": [
+        { "lat": 55.7555, "lon": 37.6175 },
+        { "lat": 55.7555, "lon": 37.6185 },
+        { "lat": 55.7548, "lon": 37.6185 },
+        { "lat": 55.7548, "lon": 37.6175 }
+      ],
+      "height": 30,
+      "levels": 10,
+      "type": "landmark",
+      "isLandmark": true
+    },
+    {
+      "id": "building_1",
+      "name": "Жилой дом 1",
+      "coordinates": [
+        { "lat": 55.7560, "lon": 37.6200 },
+        { "lat": 55.7560, "lon": 37.6210 },
+        { "lat": 55.7555, "lon": 37.6210 },
+        { "lat": 55.7555, "lon": 37.6200 }
+      ],
+      "height": 30,
+      "levels": 10,
+      "type": "residential"
+    },
+    {
+      "id": "building_2",
+      "name": "Офисное здание 2",
+      "coordinates": [
+        { "lat": 55.7565, "lon": 37.6190 },
+        { "lat": 55.7565, "lon": 37.6200 },
+        { "lat": 55.7560, "lon": 37.6200 },
+        { "lat": 55.7560, "lon": 37.6190 }
+      ],
+      "height": 45,
+      "levels": 15,
+      "type": "commercial"
+    },
+    {
+      "id": "building_3",
+      "name": "Жилой комплекс 3",
+      "coordinates": [
+        { "lat": 55.7570, "lon": 37.6210 },
+        { "lat": 55.7570, "lon": 37.6225 },
+        { "lat": 55.7563, "lon": 37.6225 },
+        { "lat": 55.7563, "lon": 37.6210 }
+      ],
+      "height": 50,
+      "levels": 16,
+      "type": "residential"
+    },
+    {
+      "id": "building_4",
+      "name": "Торговый центр 4",
+      "coordinates": [
+        { "lat": 55.7500, "lon": 37.6240 },
+        { "lat": 55.7500, "lon": 37.6255 },
+        { "lat": 55.7492, "lon": 37.6255 },
+        { "lat": 55.7492, "lon": 37.6240 }
+      ],
+      "height": 35,
+      "levels": 11,
+      "type": "commercial"
+    },
+    {
+      "id": "building_5",
+      "name": "Административное здание 5",
+      "coordinates": [
+        { "lat": 55.7575, "lon": 37.6230 },
+        { "lat": 55.7575, "lon": 37.6242 },
+        { "lat": 55.7568, "lon": 37.6242 },
+        { "lat": 55.7568, "lon": 37.6230 }
+      ],
+      "height": 40,
+      "levels": 13,
+      "type": "office"
+    },
+    {
+      "id": "building_6",
+      "name": "Бизнес-центр 6",
+      "coordinates": [
+        { "lat": 55.7495, "lon": 37.6150 },
+        { "lat": 55.7495, "lon": 37.6163 },
+        { "lat": 55.7487, "lon": 37.6163 },
+        { "lat": 55.7487, "lon": 37.6150 }
+      ],
+      "height": 60,
+      "levels": 20,
+      "type": "commercial"
+    },
+    {
+      "id": "building_7",
+      "name": "Жилое здание 7",
+      "coordinates": [
+        { "lat": 55.7580, "lon": 37.6165 },
+        { "lat": 55.7580, "lon": 37.6178 },
+        { "lat": 55.7573, "lon": 37.6178 },
+        { "lat": 55.7573, "lon": 37.6165 }
+      ],
+      "height": 38,
+      "levels": 12,
+      "type": "residential"
+    },
+    {
+      "id": "building_8",
+      "name": "Гостиница 8",
+      "coordinates": [
+        { "lat": 55.7485, "lon": 37.6195 },
+        { "lat": 55.7485, "lon": 37.6208 },
+        { "lat": 55.7478, "lon": 37.6208 },
+        { "lat": 55.7478, "lon": 37.6195 }
+      ],
+      "height": 55,
+      "levels": 18,
+      "type": "commercial"
+    }
+  ],
+  "roads": [
+    {
+      "id": "red_square_north",
+      "name": "Красная площадь (север)",
+      "coordinates": [
+        { "lat": 55.7555, "lon": 37.6190 },
+        { "lat": 55.7555, "lon": 37.6220 }
+      ],
+      "type": "pedestrian",
+      "width": 2,
+      "lanes": 0
+    },
+    {
+      "id": "red_square_south",
+      "name": "Красная площадь (юг)",
+      "coordinates": [
+        { "lat": 55.7520, "lon": 37.6190 },
+        { "lat": 55.7520, "lon": 37.6220 }
+      ],
+      "type": "pedestrian",
+      "width": 2,
+      "lanes": 0
+    },
+    {
+      "id": "tverskaya_1",
+      "name": "Тверская улица",
+      "coordinates": [
+        { "lat": 55.7560, "lon": 37.6150 },
+        { "lat": 55.7580, "lon": 37.6150 }
+      ],
+      "type": "primary",
+      "width": 8,
+      "lanes": 4
+    },
+    {
+      "id": "mokhovaya_1",
+      "name": "Моховая улица",
+      "coordinates": [
+        { "lat": 55.7560, "lon": 37.6180 },
+        { "lat": 55.7580, "lon": 37.6180 }
+      ],
+      "type": "secondary",
+      "width": 6,
+      "lanes": 2
+    },
+    {
+      "id": "nikolskaya_1",
+      "name": "Никольская улица",
+      "coordinates": [
+        { "lat": 55.7560, "lon": 37.6210 },
+        { "lat": 55.7580, "lon": 37.6210 }
+      ],
+      "type": "secondary",
+      "width": 6,
+      "lanes": 2
+    },
+    {
+      "id": "varvarka_1",
+      "name": "Варварка",
+      "coordinates": [
+        { "lat": 55.7515, "lon": 37.6220 },
+        { "lat": 55.7500, "lon": 37.6250 }
+      ],
+      "type": "secondary",
+      "width": 6,
+      "lanes": 2
+    },
+    {
+      "id": "kremlin_embankment",
+      "name": "Кремлёвская набережная",
+      "coordinates": [
+        { "lat": 55.7485, "lon": 37.6150 },
+        { "lat": 55.7485, "lon": 37.6220 }
+      ],
+      "type": "primary",
+      "width": 8,
+      "lanes": 4
+    },
+    {
+      "id": "cross_street_1",
+      "name": "Поперечная улица 1",
+      "coordinates": [
+        { "lat": 55.7565, "lon": 37.6150 },
+        { "lat": 55.7565, "lon": 37.6240 }
+      ],
+      "type": "residential",
+      "width": 4,
+      "lanes": 2
+    },
+    {
+      "id": "cross_street_2",
+      "name": "Поперечная улица 2",
+      "coordinates": [
+        { "lat": 55.7495, "lon": 37.6150 },
+        { "lat": 55.7495, "lon": 37.6240 }
+      ],
+      "type": "residential",
+      "width": 4,
+      "lanes": 2
+    }
+  ],
+  "parks": [
+    {
+      "id": "alexander_garden",
+      "name": "Александровский сад",
+      "coordinates": [
+        { "lat": 55.7505, "lon": 37.6145 },
+        { "lat": 55.7548, "lon": 37.6145 },
+        { "lat": 55.7548, "lon": 37.6160 },
+        { "lat": 55.7505, "lon": 37.6160 }
+      ],
+      "type": "park"
+    },
+    {
+      "id": "small_park_1",
+      "name": "Сквер у Никольской",
+      "coordinates": [
+        { "lat": 55.7580, "lon": 37.6245 },
+        { "lat": 55.7585, "lon": 37.6245 },
+        { "lat": 55.7585, "lon": 37.6255 },
+        { "lat": 55.7580, "lon": 37.6255 }
+      ],
+      "type": "garden"
+    }
+  ],
+  "water": [
+    {
+      "id": "moskva_river",
+      "name": "Москва-река",
+      "coordinates": [
+        { "lat": 55.7480, "lon": 37.6140 },
+        { "lat": 55.7480, "lon": 37.6260 },
+        { "lat": 55.7475, "lon": 37.6260 },
+        { "lat": 55.7475, "lon": 37.6140 }
+      ],
+      "type": "river"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "landmark_1",
+      "name": "Кремль",
+      "position": { "lat": 55.7520, "lon": 37.6175 },
+      "description": "Московский Кремль - резиденция Президента России",
+      "height": 80,
+      "icon": "🏛️"
+    },
+    {
+      "id": "landmark_2",
+      "name": "Красная площадь",
+      "position": { "lat": 55.7539, "lon": 37.6208 },
+      "description": "Главная площадь Москвы",
+      "height": 5,
+      "icon": "🏛️"
+    },
+    {
+      "id": "landmark_3",
+      "name": "Собор Василия Блаженного",
+      "position": { "lat": 55.7525, "lon": 37.6231 },
+      "description": "Покровский собор",
+      "height": 65,
+      "icon": "⛪"
+    },
+    {
+      "id": "landmark_4",
+      "name": "ГУМ",
+      "position": { "lat": 55.7546, "lon": 37.6211 },
+      "description": "Главный универсальный магазин",
+      "height": 30,
+      "icon": "🏬"
+    },
+    {
+      "id": "landmark_5",
+      "name": "Исторический музей",
+      "position": { "lat": 55.7556, "lon": 37.6178 },
+      "description": "Государственный исторический музей",
+      "height": 35,
+      "icon": "🏛️"
+    },
+    {
+      "id": "landmark_6",
+      "name": "Мавзолей Ленина",
+      "position": { "lat": 55.7535, "lon": 37.6196 },
+      "description": "Мавзолей В.И. Ленина",
+      "height": 12,
+      "icon": "🏛️"
+    }
+  ],
+  "bounds": {
+    "minLat": 55.7470,
+    "maxLat": 55.7590,
+    "minLon": 37.6130,
+    "maxLon": 37.6270
+  }
+}
