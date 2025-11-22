@@ -28,18 +28,21 @@ const ProductShowcase = dynamic(
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
-const InteractiveGame = dynamic(
-  () => import('../../threejs-apps/froggy-road').then((mod) => ({ default: mod.InteractiveGame })),
-  { ssr: false, loading: () => <LoadingCanvas /> }
-);
-
 const RogueGame = dynamic(
   () => import('../../threejs-apps/rogue').then((mod) => ({ default: mod.RogueGame })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
 const BlockchainCityVisualization = dynamic(
-  () => import('../../threejs-apps/blockchain-city').then((mod) => ({ default: mod.BlockchainCityVisualization })),
+  () =>
+    import('../../threejs-apps/blockchain-city').then((mod) => ({
+      default: mod.BlockchainCityVisualization,
+    })),
+  { ssr: false, loading: () => <LoadingCanvas /> }
+);
+
+const FroggyRoad = dynamic(
+  () => import('../../threejs-apps/froggy-road').then((mod) => ({ default: mod.FroggyRoad })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
@@ -55,7 +58,7 @@ export function ProjectCanvas({ slug }: ProjectCanvasProps) {
           case 'product-showcase':
             return <ProductShowcase />;
           case 'froggy-road':
-            return <InteractiveGame />;
+            return <FroggyRoad />;
           case 'rogue':
             return <RogueGame />;
           default:
