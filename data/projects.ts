@@ -2,6 +2,14 @@ import { Project } from '@/types';
 
 export const Projects: Project[] = [
   {
+    slug: 'blockchain-city',
+    title: 'Blockchain City',
+    description:
+      'Interactive 3D blockchain visualization where each block is represented as a building in a growing city. Building height reflects transaction count, with color-coded activity levels. Features real-time block mining, auto-mining mode, transaction particles, and detailed block exploration. Click buildings to view transactions and block details.',
+    thumbnail: '/projects-screens/blockchain-city.png',
+    tags: ['Blockchain', 'Web3', 'Visualization', 'Interactive', 'Particles', 'Animation'],
+  },
+  {
     slug: 'rogue',
     title: 'Rogue',
     description:

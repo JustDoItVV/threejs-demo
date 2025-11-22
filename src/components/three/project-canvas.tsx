@@ -38,11 +38,18 @@ const RogueGame = dynamic(
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
+const BlockchainCityVisualization = dynamic(
+  () => import('../../threejs-apps/blockchain-city').then((mod) => ({ default: mod.BlockchainCityVisualization })),
+  { ssr: false, loading: () => <LoadingCanvas /> }
+);
+
 export function ProjectCanvas({ slug }: ProjectCanvasProps) {
   return (
     <ErrorBoundary>
       {(() => {
         switch (slug) {
+          case 'blockchain-city':
+            return <BlockchainCityVisualization />;
           case 'animated-scene':
             return <AnimatedScene />;
           case 'product-showcase':
