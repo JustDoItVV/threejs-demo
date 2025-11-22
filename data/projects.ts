@@ -33,5 +33,13 @@ export const Projects: Project[] = [
     thumbnail: '/projects-screens/3d-animation.png',
     tags: ['GLSL', 'Particles', 'OrbitControls'],
   },
+  {
+    slug: 'point-cloud-viewer',
+    title: 'Point Cloud Viewer',
+    description:
+      'Professional aerial photogrammetry point cloud viewer supporting LAS, LAZ, PTS, and PTX formats. Features dual camera modes (orthographic isometric and first-person flight), real-time LOD optimization for large datasets, Z-up coordinate system, and cloud storage integration (Yandex Disk, Google Drive). Interactive controls for visualization and analysis.',
+    thumbnail: '/projects-screens/point-cloud-viewer.png',
+    tags: ['Point Cloud', 'LAS/LAZ', 'PTS/PTX', 'Photogrammetry', 'LOD', 'Dual Camera'],
+  },
 ];
 
