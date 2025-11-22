@@ -5,29 +5,23 @@ import { useState } from 'react';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
-import { MaterialSettings } from './index';
+import { CameraType } from './camera-controls';
 
 declare global {
   interface Window {
     moveCameraTo: (position: [number, number, number], target?: [number, number, number]) => void;
     disableOrbitControls: () => void;
     enableOrbitControls: () => void;
+    toggleCameraType: () => void;
   }
 }
 
 interface MaterialControlsProps {
-  settings: MaterialSettings;
-  onSettingsChange: (settings: MaterialSettings) => void;
-  showScreenUI: boolean;
-  onToggleScreenUI: () => void;
+  cameraType: CameraType;
+  onCameraTypeChange: (type: CameraType) => void;
 }
 
-export function MaterialControls({
-  settings,
-  onSettingsChange,
-  showScreenUI,
-  onToggleScreenUI,
-}: MaterialControlsProps) {
+export function MaterialControls({ cameraType, onCameraTypeChange }: MaterialControlsProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   const handleCameraPreset = (preset: string) => {
@@ -49,15 +43,6 @@ export function MaterialControls({
     }
   };
 
-  const presetColors = [
-    { name: 'Blue', value: '#3b82f6' },
-    { name: 'Red', value: '#ef4444' },
-    { name: 'Green', value: '#10b981' },
-    { name: 'Purple', value: '#8b5cf6' },
-    { name: 'Black', value: '#1a1a1a' },
-    { name: 'White', value: '#f0f0f0' },
-  ];
-
   if (!isVisible) {
     return (
       <Button
@@ -66,7 +51,7 @@ export function MaterialControls({
         className="absolute top-4 right-4 z-10"
         onClick={() => setIsVisible(true)}
       >
-        Show Controls
+        Camera Controls
       </Button>
     );
   }
@@ -74,23 +59,36 @@ export function MaterialControls({
   return (
     <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur border rounded-lg p-4 space-y-4 max-w-xs">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm">Product Controls</h3>
+        <h3 className="font-semibold text-sm">Camera Controls</h3>
         <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)}>
           Hide
         </Button>
       </div>
 
-      {/* Screen UI Toggle */}
+      {/* Camera Type Toggle */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Screen UI</p>
-        <Button
-          variant={showScreenUI ? 'default' : 'outline'}
-          size="sm"
-          onClick={onToggleScreenUI}
-          className="w-full"
-        >
-          {showScreenUI ? 'Hide Phone Screen' : 'Show Phone Screen'}
-        </Button>
+        <p className="text-xs font-medium text-muted-foreground">Camera Type</p>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={cameraType === 'perspective' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onCameraTypeChange('perspective')}
+          >
+            Perspective
+          </Button>
+          <Button
+            variant={cameraType === 'orthographic' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onCameraTypeChange('orthographic')}
+          >
+            Orthographic
+          </Button>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          {cameraType === 'perspective'
+            ? 'Realistic view with depth perspective'
+            : 'Technical view without distortion'}
+        </p>
       </div>
 
       {/* Camera Presets */}
@@ -112,59 +110,6 @@ export function MaterialControls({
         </div>
       </div>
 
-      {/* Color Picker */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Color</p>
-        <div className="grid grid-cols-3 gap-2">
-          {presetColors.map((color) => (
-            <button
-              key={color.value}
-              onClick={() => onSettingsChange({ ...settings, color: color.value })}
-              className="h-8 rounded border-2 transition-all hover:scale-110"
-              style={{
-                backgroundColor: color.value,
-                borderColor: settings.color === color.value ? 'hsl(var(--primary))' : 'transparent',
-              }}
-              title={color.name}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Metalness Slider */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs">
-          <span className="font-medium text-muted-foreground">Metalness</span>
-          <span className="text-foreground">{settings.metalness.toFixed(2)}</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={settings.metalness}
-          onChange={(e) => onSettingsChange({ ...settings, metalness: parseFloat(e.target.value) })}
-          className="w-full"
-        />
-      </div>
-
-      {/* Roughness Slider */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs">
-          <span className="font-medium text-muted-foreground">Roughness</span>
-          <span className="text-foreground">{settings.roughness.toFixed(2)}</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={settings.roughness}
-          onChange={(e) => onSettingsChange({ ...settings, roughness: parseFloat(e.target.value) })}
-          className="w-full"
-        />
-      </div>
-
       {/* Instructions */}
       <div className="pt-2 border-t space-y-1 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -177,7 +122,7 @@ export function MaterialControls({
           <Badge variant="outline" className="text-[10px] px-1">
             Scroll
           </Badge>
-          <span>Zoom</span>
+          <span>Zoom {cameraType === 'orthographic' ? '(scale)' : ''}</span>
         </div>
       </div>
     </div>

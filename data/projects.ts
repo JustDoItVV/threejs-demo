@@ -21,9 +21,9 @@ export const Projects: Project[] = [
     slug: 'product-showcase',
     title: '3D Product Showcase',
     description:
-      'iPhone 14 Pro model viewer with interactive screen UI, swipeable app icons, camera view, and customizable materials (color, metalness, roughness). Professional lighting setup with environment reflections.',
+      'Advanced 3D model viewer supporting multiple formats (GLB, GLTF, FBX, OBJ) with file upload and URL loading (max 2GB). Features component-level material customization (color, metalness, roughness, custom textures), perspective/orthographic camera modes, preset camera views, and default iPhone 14 Pro model library. Professional lighting with environment reflections.',
     thumbnail: '/projects-screens/product-showcase.png',
-    tags: ['GLTF', 'Interactive UI', 'Materials'],
+    tags: ['GLTF', 'Multi-Format', 'Materials', 'Camera Modes', 'Upload', 'Textures'],
   },
   {
     slug: 'animated-scene',

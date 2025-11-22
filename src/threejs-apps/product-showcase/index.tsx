@@ -1,43 +1,141 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import * as THREE from 'three';
 
-import { PerspectiveCamera } from '@react-three/drei';
-
+import { Stats } from '@react-three/drei';
 import { CanvasWrapper } from '../../components/three/canvas-wrapper';
-import { CameraControls } from './camera-controls';
+import { CameraControls, CameraType } from './camera-controls';
 import { Environment } from './environment';
-import { MaterialControls } from './material-controls';
+import { UnifiedControls } from './unified-controls';
 import { ProductModel } from './product-model';
-
-export interface MaterialSettings {
-  color: string;
-  metalness: number;
-  roughness: number;
-}
+import { ModelSource, ModelMesh } from './model-loader';
+import { ComponentMaterialSettings } from './model-components-panel';
 
 export function ProductShowcase() {
-  const [materialSettings, setMaterialSettings] = useState<MaterialSettings>({
-    color: '#3b82f6',
-    metalness: 0.8,
-    roughness: 0.2,
-  });
-  const [showScreenUI, setShowScreenUI] = useState(true);
+  // Camera state
+  const [cameraType, setCameraType] = useState<CameraType>('perspective');
+  const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
+
+  // Model state
+  const [modelSource, setModelSource] = useState<ModelSource | null>(null);
+  const [currentModelId, setCurrentModelId] = useState<string | null>('iphone-14');
+  const [modelError, setModelError] = useState<string | null>(null);
+
+  // Meshes state
+  const [meshes, setMeshes] = useState<ModelMesh[]>([]);
+  const [selectedMeshId, setSelectedMeshId] = useState<string | null>(null);
+
+  // Component material settings
+  const [componentSettings, setComponentSettings] = useState<Record<string, ComponentMaterialSettings>>({});
+
+  // Handle model selection
+  const handleModelSelect = useCallback((source: ModelSource) => {
+    setModelSource(source);
+    setModelError(null);
+    setMeshes([]);
+    setSelectedMeshId(null);
+    setComponentSettings({});
+
+    // Set current model ID based on source with timestamp to ensure uniqueness
+    if (source.type === 'url' && typeof source.data === 'string') {
+      if (source.data.includes('iphone')) {
+        setCurrentModelId('iphone-14');
+      } else {
+        setCurrentModelId(`custom-url-${Date.now()}`);
+      }
+    } else {
+      setCurrentModelId(`custom-file-${Date.now()}`);
+    }
+  }, []);
+
+  // Handle meshes extraction
+  const handleMeshesExtracted = useCallback((extractedMeshes: ModelMesh[], boundingBox?: THREE.Box3) => {
+    setMeshes(extractedMeshes);
+
+    // Store bounding box if provided
+    if (boundingBox) {
+      setModelBounds(boundingBox);
+    }
+
+    // Initialize default settings for all meshes
+    const defaultSettings: Record<string, ComponentMaterialSettings> = {};
+    extractedMeshes.forEach((mesh) => {
+      // Get current material properties if available
+      const material = Array.isArray(mesh.mesh.material)
+        ? mesh.mesh.material[0]
+        : mesh.mesh.material;
+
+      let color = '#3b82f6';
+      let metalness = 0.5;
+      let roughness = 0.5;
+
+      if (material instanceof THREE.MeshStandardMaterial) {
+        if (material.color) {
+          color = `#${material.color.getHexString()}`;
+        }
+        metalness = material.metalness;
+        roughness = material.roughness;
+      }
+
+      defaultSettings[mesh.id] = {
+        color,
+        metalness,
+        roughness,
+        texture: null,
+      };
+    });
+
+    setComponentSettings(defaultSettings);
+  }, []);
+
+  // Handle material change for specific mesh
+  const handleMaterialChange = useCallback(
+    (meshId: string, settings: ComponentMaterialSettings) => {
+      setComponentSettings((prev) => ({
+        ...prev,
+        [meshId]: settings,
+      }));
+    },
+    []
+  );
+
+  // Handle load error
+  const handleLoadError = useCallback((error: string) => {
+    setModelError(error);
+  }, []);
 
   return (
     <div className="relative w-full h-full">
+      {/* 3D Canvas */}
       <CanvasWrapper>
-        <PerspectiveCamera makeDefault position={[3, 3, 6]} fov={50} />
         <Environment />
-        <CameraControls />
-        <ProductModel materialSettings={materialSettings} showScreenUI={showScreenUI} />
+        <CameraControls cameraType={cameraType} onCameraTypeChange={setCameraType} modelBounds={modelBounds} modelId={currentModelId} />
+        <ProductModel
+          modelSource={modelSource}
+          onMeshesExtracted={handleMeshesExtracted}
+          onLoadError={handleLoadError}
+          componentSettings={componentSettings}
+          selectedMeshId={selectedMeshId}
+          removeScreenForIPhone={true}
+        />
+        {/* Performance Stats */}
+        <Stats className="stats-panel" />
       </CanvasWrapper>
 
-      <MaterialControls
-        settings={materialSettings}
-        onSettingsChange={setMaterialSettings}
-        showScreenUI={showScreenUI}
-        onToggleScreenUI={() => setShowScreenUI(!showScreenUI)}
+      {/* Unified Controls Panel */}
+      <UnifiedControls
+        onModelSelect={handleModelSelect}
+        currentModel={currentModelId}
+        modelError={modelError}
+        cameraType={cameraType}
+        onCameraTypeChange={setCameraType}
+        meshes={meshes}
+        selectedMeshId={selectedMeshId}
+        onMeshSelect={setSelectedMeshId}
+        currentSettings={componentSettings}
+        onMaterialChange={handleMaterialChange}
+        modelBounds={modelBounds}
       />
     </div>
   );
