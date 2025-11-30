@@ -1,8 +1,7 @@
 import { Items } from '../../config/game.config';
+import { IItemEntity, IPosition } from '../../types/entities';
 
-import type { Position } from '../../types/game-types';
-
-export class Item {
+export class ItemEntity implements IItemEntity {
   type: string;
   subtype: string | null = null;
   healthUp: number | null = null;
@@ -10,11 +9,11 @@ export class Item {
   dexterityUp: number | null = null;
   strengthUp: number | null = null;
   cost: number = 0;
-  position: Position;
+  position: IPosition;
   isDoor?: boolean;
   name: string = '';
 
-  constructor(position: Position, isDoor: boolean = false) {
+  constructor(position: IPosition, isDoor: boolean = false) {
     this.position = position;
 
     if (isDoor) {

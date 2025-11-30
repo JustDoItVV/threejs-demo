@@ -1,10 +1,14 @@
-// Game Types for Rogue Game
-
-export type GameState = 'start' | 'game' | 'backpack' | 'end';
+export const enum EGameState {
+  Start = 'start',
+  Game = 'game',
+  Backpack = 'backpack',
+  End = 'end',
+}
 
 export interface Position {
   x: number;
   y: number;
+  z: number;
   room: Room;
 }
 
@@ -98,7 +102,7 @@ export interface GameStatistics {
 }
 
 export interface GameSession {
-  state: GameState;
+  state: EGameState;
   level: Level;
   character: Character;
   logMessages: string[];

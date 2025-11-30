@@ -1,35 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MAX_LEVEL } from '../../config/game.config';
-import { Character } from './character';
-import { Level } from './level';
+import { IGameSessionEntity, IGameStatisticsEntity } from '../../types/entities';
+import { EGameState } from '../../types/game-types';
+import { CharacterEntity } from './character';
+import { LevelEntity } from './level';
 
-import type { GameState } from '../../types/game-types';
-import type { Item } from './item';
+import type { ItemEntity } from './item';
 import type Datalayer from '../../infrastructure/repositories/datalayer';
 
-interface GameStatistics {
-  enemiesKilled: number;
-  foodEaten: number;
-  elixirsDrunk: number;
-  scrollsUsed: number;
-  hitMissed: number;
-  travelledDistance: number;
-  itemsDropped?: number;
-}
-
-export class GameSession {
+export class GameSessionEntity implements IGameSessionEntity {
   datalayer: Datalayer;
-  state: GameState;
-  level: Level;
-  character: Character;
+  state: EGameState;
+  level: LevelEntity;
+  character: CharacterEntity;
   win: boolean | null;
   logMessages: string[];
-  backpackItems: Item[] | null;
-  statistics: GameStatistics;
+  backpackItems: ItemEntity[] | null;
+  statistics: IGameStatisticsEntity;
 
   constructor(datalayer: Datalayer) {
     this.datalayer = datalayer;
-    this.state = 'start';
+    this.state = EGameState.Start;
     this.level = null as any;
     this.character = null as any;
     this.win = null;
@@ -46,10 +37,10 @@ export class GameSession {
     this.init();
   }
 
-  init(): void {
-    this.character = new Character();
-    this.level = new Level(this, this.character);
-    this.state = 'start';
+  init() {
+    this.character = new CharacterEntity();
+    this.level = new LevelEntity(this, this.character);
+    this.state = EGameState.Start;
     this.logMessages = [];
     this.statistics = {
       enemiesKilled: 0,
@@ -61,26 +52,26 @@ export class GameSession {
     };
   }
 
-  reset(): void {
+  reset() {
     this.win = null;
     this.level.level = 1;
     this.character.reset();
     this.logMessages = [];
   }
 
-  startGame(): void {
+  startGame() {
     this.reset();
     this.level.create();
-    this.state = 'game';
+    this.state = EGameState.Game;
     this.logMessages = ['Game started'];
   }
 
-  start(): void {
+  start() {
     this.startGame();
   }
 
-  restart(): void {
-    this.state = 'start';
+  restart() {
+    this.state = EGameState.Start;
     this.win = null;
     this.logMessages = [];
   }
@@ -121,25 +112,26 @@ export class GameSession {
     }
   }
 
-  endGame(win: boolean, message: string): void {
+  endGame(win: boolean, message: string) {
     this.win = win;
-    this.state = 'end';
+    this.state = EGameState.End;
     this.logMessages = [message];
-    this.datalayer.saveHighscore([
-      this.character.gold,
-      this.level.level,
-      this.statistics.enemiesKilled,
-      this.statistics.foodEaten,
-      this.statistics.elixirsDrunk,
-      this.statistics.scrollsUsed,
-      this.statistics.hitMissed,
-      this.statistics.travelledDistance,
-      new Date(),
-    ]);
+    this.datalayer.saveHighscore({
+      score:
+        this.character.gold +
+        this.level.level +
+        this.statistics.enemiesKilled +
+        this.statistics.foodEaten +
+        this.statistics.elixirsDrunk +
+        this.statistics.scrollsUsed +
+        this.statistics.hitMissed +
+        this.statistics.travelledDistance,
+      date: new Date(),
+    });
   }
 
-  useBackpack(input: string): void {
-    if (this.state === 'game') {
+  useBackpack(input: string) {
+    if (this.state === EGameState.Game) {
       let type: string | undefined;
       if (input === 'h') type = 'weapon';
       if (input === 'j') type = 'food';
@@ -147,15 +139,13 @@ export class GameSession {
       if (input === 'e') type = 'scroll';
       if (input === 'b') type = 'any';
 
-  // @ts-expect-error -- tmp
-      const backpackItems = this.character.backpack.showItems(type);
+      const backpackItems = this.character.backpack.showItems(type ?? '');
 
       if (backpackItems.length > 0) {
-  // @ts-expect-error -- tmp
         this.backpackItems = backpackItems;
         this.logMessages = ['Choose item:'];
         backpackItems.forEach((item, index) => { this.logMessages.push(`${index + 1} - ${item.type} ${item.subtype}`) });
-        this.state = 'backpack';
+        this.state = EGameState.Backpack;
       } else {
         this.logMessages = [`No such items of type ${type} in backpack`];
       }
@@ -163,20 +153,18 @@ export class GameSession {
       const index = Number(input) - 1;
       const item = this.character.backpack.getItem(index);
       if (item) {
-  // @ts-expect-error -- tmp
         this.character.useItem(item);
-        this.state = 'game';
+        this.state = EGameState.Game;
       } else {
         this.logMessages = [`Wrong input`];
       }
     }
   }
 
-  dropBackpackItem(input: string): void {
+  dropBackpackItem(input: string) {
     const index = Number(input) - 1;
     const item = this.character.backpack.removeItem(index);
     if (item) {
-  // @ts-expect-error -- tmp
       this.character.dropItem(item);
       this.logMessages = [`Dropped ${item.type} ${item.subtype}`];
       this.statistics.itemsDropped = (this.statistics.itemsDropped || 0) + 1;
@@ -185,12 +173,12 @@ export class GameSession {
     }
   }
 
-  useUserInput(input: string): void {
-    if (this.state === 'start') {
+  useUserInput(input: string) {
+    if (this.state === EGameState.Start) {
       if (input === 'enter')
         this.startGame()
 
-    } else if (this.state === 'game') {
+    } else if (this.state === EGameState.Game) {
       if (['up', 'right', 'down', 'left'].includes(input)) {
         this.makeTurn(input);
       }
@@ -198,7 +186,7 @@ export class GameSession {
         this.useBackpack(input);
       }
 
-    } else if (this.state === 'backpack') {
+    } else if (this.state === EGameState.Backpack) {
       if (['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
         this.useBackpack(input);
       } else if (input.startsWith('d') && /^d[1-9]$/.test(input)) {
@@ -206,13 +194,13 @@ export class GameSession {
         this.dropBackpackItem(input.slice(1));
       }
 
-    } else if (this.state === 'end') {
+    } else if (this.state === EGameState.End) {
       if (input === 'enter')
         this.startGame()
     }
   }
 
-  applyData(json: Partial<GameSession>): void {
+  applyData(json: Partial<GameSessionEntity>) {
     Object.assign(this, json);
   }
 }

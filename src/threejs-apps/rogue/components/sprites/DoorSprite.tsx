@@ -4,29 +4,25 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { getDoorSprite } from '../../config/assets';
-import { Item } from '../../types/game-types';
+import { IItemEntity } from '../../types/entities';
 
 interface DoorSpriteProps {
-  door: Item;
+  door: IItemEntity;
 }
 
 export function DoorSprite({ door }: DoorSpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
 
-  // Determine door direction based on position in room
-  // Doors at top/bottom edges face down/up, doors at sides face side
   const direction: 'down' | 'side' | 'up' = useMemo(() => {
     const room = door.position.room;
     const { x, y } = door.position;
 
-    // Check if door is at top or bottom edge
-    if (y === 0) return 'down'; // Bottom edge
-    if (y >= room.sizeY - 1) return 'up'; // Top edge
+    if (!room) return 'down';
 
-    // Check if door is at left or right edge
+    if (y === 0) return 'down';
+    if (y >= room.sizeY - 1) return 'up';
     if (x === 0 || x >= room.sizeX - 1) return 'side';
 
-    // Default to down for doors in the middle of the room
     return 'down';
   }, [door.position]);
 
@@ -35,21 +31,21 @@ export function DoorSprite({ door }: DoorSpriteProps) {
   const texture = useMemo(() => {
     try {
       const loader = new THREE.TextureLoader();
-      const tex = loader.load(texturePath);
+      const texture = loader.load(texturePath);
 
-      tex.minFilter = THREE.NearestFilter;
-      tex.magFilter = THREE.NearestFilter;
-      tex.generateMipmaps = false;
-      tex.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
 
-      const totalFrames = 4;
+      const totalFrames = 1;
       const frameIndex = 0;
-      tex.repeat.set(1 / totalFrames, 1);
-      tex.offset.set(frameIndex / totalFrames, 0);
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
+      texture.repeat.set(1 / totalFrames, 1);
+      texture.offset.set(frameIndex / totalFrames, 0);
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
 
-      return tex;
+      return texture;
     } catch (error) {
       console.error('[DoorSprite] Failed to load texture:', error);
       return null;
@@ -75,7 +71,7 @@ export function DoorSprite({ door }: DoorSpriteProps) {
     <sprite
       ref={spriteRef}
       position={[worldX, worldY, worldZ]}
-      scale={[1.2, 1.2, 1]}
+      scale={[0.7, 0.7, 1]}
       visible={visible}
     >
       <spriteMaterial attach="material" map={texture} transparent />

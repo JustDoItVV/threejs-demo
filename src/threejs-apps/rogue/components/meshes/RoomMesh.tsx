@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 
 import { getTileSprite } from '../../config/assets';
+import { TILE_SIZE } from '../../config/game.config';
 import { Room } from '../../types/game-types';
 
 interface RoomMeshProps {
@@ -52,6 +53,8 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
 
+      texture.rotation = Math.PI / 2;
+
       return texture;
     } catch (error) {
       console.error('[RoomMesh] Failed to load wall texture:', error);
@@ -78,7 +81,7 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
   return (
     <group>
       {/* Floor */}
-      <mesh position={[centerX, centerY, 0]} receiveShadow>
+      <mesh position={[centerX - TILE_SIZE / 2, centerY - TILE_SIZE / 2, 0]} receiveShadow>
         <planeGeometry args={[room.sizeX, room.sizeY]} />
         {floorTexture ? (
           <MaterialComponent
@@ -98,41 +101,71 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
       </mesh>
 
       {/* North Wall */}
-      <mesh position={[centerX, room.fieldY - wallThickness / 2, wallHeight / 2]} castShadow>
-        <boxGeometry args={[room.sizeX - 2 * cornerSize, wallThickness, wallHeight]} />
-        {wallMaterial}
+      <mesh
+        position={[
+          centerX - TILE_SIZE / 2,
+          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
+          wallHeight / 2,
+        ]}
+        rotation={[Math.PI / 16, 0, 0]}
+        castShadow
+      >
+        <mesh position={[0, 0, wallHeight / 2]}>
+          <boxGeometry args={[room.sizeX, wallThickness, wallHeight]} />
+          {wallMaterial}
+        </mesh>
       </mesh>
 
       {/* South Wall */}
       <mesh
-        position={[centerX, room.fieldY + room.sizeY + wallThickness / 2, wallHeight / 2]}
+        position={[
+          centerX - TILE_SIZE / 2,
+          room.fieldY + room.sizeY + wallThickness / 2 - TILE_SIZE / 2,
+          0,
+        ]}
+        rotation={[-Math.PI / 16, 0, 0]}
         castShadow
       >
-        <boxGeometry args={[room.sizeX - 2 * cornerSize, wallThickness, wallHeight]} />
-        {wallMaterial}
+        <mesh position={[0, 0, wallHeight / 2]}>
+          <boxGeometry args={[room.sizeX, wallThickness, wallHeight]} />
+          {wallMaterial}
+        </mesh>
       </mesh>
 
       {/* West Wall */}
-      <mesh position={[room.fieldX - wallThickness / 2, centerY, wallHeight / 2]} castShadow>
-        <boxGeometry args={[wallThickness, room.sizeY - 2 * cornerSize, wallHeight]} />
-        {wallMaterial}
-      </mesh>
-
-      {/* East Wall (at maximum X) - shortened to avoid corners */}
       <mesh
-        position={[room.fieldX + room.sizeX + wallThickness / 2, centerY, wallHeight / 2]}
+        position={[room.fieldX - wallThickness / 2 - TILE_SIZE / 2, centerY - TILE_SIZE / 2, 0]}
+        rotation={[0, -Math.PI / 16, 0]}
         castShadow
       >
-        <boxGeometry args={[wallThickness, room.sizeY - 2 * cornerSize, wallHeight]} />
-        {wallMaterial}
+        <mesh position={[0, 0, wallHeight / 2]}>
+          <boxGeometry args={[wallThickness, room.sizeY, wallHeight]} />
+          {wallMaterial}
+        </mesh>
+      </mesh>
+
+      {/* East Wall */}
+      <mesh
+        position={[
+          room.fieldX + room.sizeX + wallThickness / 2 - TILE_SIZE / 2,
+          centerY - TILE_SIZE / 2,
+          0,
+        ]}
+        rotation={[0, Math.PI / 16, 0]}
+        castShadow
+      >
+        <mesh position={[0, 0, wallHeight / 2]}>
+          <boxGeometry args={[wallThickness, room.sizeY, wallHeight]} />
+          {wallMaterial}
+        </mesh>
       </mesh>
 
       {/* Corner Blocks - prevent wall intersections */}
       {/* Northwest Corner */}
       <mesh
         position={[
-          room.fieldX - wallThickness / 2,
-          room.fieldY - wallThickness / 2,
+          room.fieldX - wallThickness / 2 - TILE_SIZE / 2,
+          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
           wallHeight / 2,
         ]}
         castShadow
@@ -144,8 +177,8 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
       {/* Northeast Corner */}
       <mesh
         position={[
-          room.fieldX + room.sizeX + wallThickness / 2,
-          room.fieldY - wallThickness / 2,
+          room.fieldX + room.sizeX + wallThickness / 2 - TILE_SIZE / 2,
+          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
           wallHeight / 2,
         ]}
         castShadow
@@ -157,8 +190,8 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
       {/* Southwest Corner */}
       <mesh
         position={[
-          room.fieldX - wallThickness / 2,
-          room.fieldY + room.sizeY + wallThickness / 2,
+          room.fieldX - wallThickness / 2 - TILE_SIZE / 2,
+          room.fieldY + room.sizeY + wallThickness / 2 - TILE_SIZE / 2,
           wallHeight / 2,
         ]}
         castShadow
@@ -170,8 +203,8 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
       {/* Southeast Corner */}
       <mesh
         position={[
-          room.fieldX + room.sizeX + wallThickness / 2,
-          room.fieldY + room.sizeY + wallThickness / 2,
+          room.fieldX + room.sizeX + wallThickness / 2 - TILE_SIZE / 2,
+          room.fieldY + room.sizeY + wallThickness / 2 - TILE_SIZE / 2,
           wallHeight / 2,
         ]}
         castShadow

@@ -1,6 +1,8 @@
 'use client';
 
-import { selectGameState, useRogueStore } from '../../store/rogue-store';
+import { useEffect } from 'react';
+
+import { selectController, selectRenderTrigger, useStore } from '../../store';
 import { BackpackModal } from './BackpackModal';
 import { DebugPanel } from './DebugPanel';
 import { GameOverScreen } from './GameOverScreen';
@@ -9,7 +11,11 @@ import { MenuScreen } from './MenuScreen';
 import { StatusBar } from './StatusBar';
 
 export function GameUI() {
-  const gameState = useRogueStore(selectGameState);
+  const renderTrigger = useStore(selectRenderTrigger);
+  const controller = useStore(selectController);
+  const gameState = controller?.getStatuses()?.gameState;
+
+  useEffect(() => {}, [renderTrigger]);
 
   return (
     <div className="absolute inset-0 pointer-events-none">

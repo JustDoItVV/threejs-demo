@@ -2,37 +2,36 @@
 
 import { useState } from 'react';
 
+import { cn } from '@/libs/ui/utils';
 import { Button } from '@/ui/button';
 
-import {
-  selectCameraZoom,
-  selectDebugInfo,
-  selectGodMode,
-  useRogueStore,
-} from '../../store/rogue-store';
+import { selectDebugSlice, useStore } from '../../store';
 
 export function DebugPanel() {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  // Get state from zustand store
-  const debugInfo = useRogueStore(selectDebugInfo);
-  const zoom = useRogueStore(selectCameraZoom);
-  const godMode = useRogueStore(selectGodMode);
+  const {
+    cameraPos,
+    roomInfo,
+    cameraZoom,
+    entityCount,
+    setCameraZoom,
+    godMode,
+    toggleGodMode,
+    characterPos,
+    enableFreeCameraControl,
+    toggleFreeCameraControl,
+    toggleMarkers,
+    toggleFog,
+    showGrid,
+    toggleGrid,
+  } = useStore(selectDebugSlice);
 
-  // Get actions from store
-  const setCameraZoom = useRogueStore((state) => state.setCameraZoom);
-  const toggleMarkers = useRogueStore((state) => state.toggleMarkers);
-  const toggleFog = useRogueStore((state) => state.toggleFog);
-  const toggleGodMode = useRogueStore((state) => state.toggleGodMode);
-
-  const handleZoomChange = (newZoom: number) => {
-    setCameraZoom(newZoom);
-  };
+  const handleZoomChange = (newZoom: number) => setCameraZoom(newZoom);
 
   return (
     <div className="absolute top-4 left-4 pointer-events-auto">
       <div className="bg-black/90 dark:bg-black/90 text-gray-100 dark:text-white p-3 rounded-lg border border-green-500/50 min-w-[280px] max-h-[80vh] overflow-hidden">
-        {/* Header with collapse toggle */}
         <div
           className="flex items-center justify-between cursor-pointer mb-2"
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -47,7 +46,6 @@ export function DebugPanel() {
 
         {!isCollapsed && (
           <div className="space-y-3 overflow-y-auto max-h-[70vh]">
-            {/* God Mode Toggle */}
             <div className="border-b border-green-500/30 pb-2">
               <Button
                 size="sm"
@@ -59,21 +57,22 @@ export function DebugPanel() {
               </Button>
             </div>
 
-            {/* Zoom Controls - Range Slider */}
             <div className="border-b border-green-500/30 pb-2">
-              <div className="font-bold text-green-400 text-xs mb-2">Zoom: {zoom}</div>
+              <div className="font-bold text-green-400 text-xs mb-2">Zoom: {cameraZoom}</div>
               <input
                 type="range"
                 min="5"
                 max="100"
                 step="1"
-                value={zoom}
+                value={cameraZoom}
                 onChange={(e) => handleZoomChange(Number(e.target.value))}
                 className="w-full h-2 bg-green-900/30 rounded-lg appearance-none cursor-pointer accent-green-500"
                 style={{
                   background: `linear-gradient(to right, rgb(34 197 94 / 0.5) 0%, rgb(34 197 94 / 0.5) ${
-                    ((zoom - 5) / 95) * 100
-                  }%, rgb(20 83 45 / 0.3) ${((zoom - 5) / 95) * 100}%, rgb(20 83 45 / 0.3) 100%)`,
+                    ((cameraZoom - 5) / 95) * 100
+                  }%, rgb(20 83 45 / 0.3) ${
+                    ((cameraZoom - 5) / 95) * 100
+                  }%, rgb(20 83 45 / 0.3) 100%)`,
                 }}
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -82,47 +81,43 @@ export function DebugPanel() {
               </div>
             </div>
 
-            {/* Position Info */}
-            {debugInfo && (
+            {characterPos && (
               <>
                 <div className="border-b border-green-500/30 pb-2">
                   <div className="font-bold text-green-400 text-xs mb-2">Position Info</div>
                   <div className="text-xs font-mono space-y-1 text-gray-200 dark:text-gray-100">
-                    {debugInfo.characterPos && (
+                    {characterPos && (
                       <div>
-                        Char: ({debugInfo.characterPos.x.toFixed(1)},{' '}
-                        {debugInfo.characterPos.y.toFixed(1)})
+                        Char: ({characterPos.x.toFixed(1)}, {characterPos.y.toFixed(1)})
                       </div>
                     )}
-                    {debugInfo.cameraPos && (
+                    {cameraPos && (
                       <div>
-                        Cam: ({debugInfo.cameraPos.x.toFixed(1)}, {debugInfo.cameraPos.y.toFixed(1)}
-                        , {debugInfo.cameraPos.z.toFixed(1)})
+                        Cam: ({cameraPos.x.toFixed(1)}, {cameraPos.y.toFixed(1)},{' '}
+                        {cameraPos.z.toFixed(1)})
                       </div>
                     )}
-                    {debugInfo.roomInfo && (
+                    {roomInfo && (
                       <div>
-                        Room: field({debugInfo.roomInfo.fieldX}, {debugInfo.roomInfo.fieldY}) size(
-                        {debugInfo.roomInfo.sizeX}x{debugInfo.roomInfo.sizeY})
+                        Room: field({roomInfo.fieldX}, {roomInfo.fieldY}) size(
+                        {roomInfo.sizeX}x{roomInfo.sizeY})
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Entity Count */}
                 <div className="border-b border-green-500/30 pb-2">
                   <div className="font-bold text-green-400 text-xs mb-2">Entity Count</div>
                   <div className="text-xs font-mono space-y-1 text-gray-200 dark:text-gray-100">
-                    <div>Rooms: {debugInfo.entityCount?.rooms || 0}</div>
-                    <div>Enemies: {debugInfo.entityCount?.enemies || 0}</div>
-                    <div>Items: {debugInfo.entityCount?.items || 0}</div>
-                    <div>Corridors: {debugInfo.entityCount?.corridors || 0}</div>
+                    <div>Rooms: {entityCount.rooms}</div>
+                    <div>Enemies: {entityCount.enemies}</div>
+                    <div>Items: {entityCount.items}</div>
+                    <div>Corridors: {entityCount.corridors}</div>
                   </div>
                 </div>
               </>
             )}
 
-            {/* Toggle Controls */}
             <div>
               <div className="font-bold text-green-400 text-xs mb-2">Toggles</div>
               <div className="flex flex-col gap-1">
@@ -141,6 +136,30 @@ export function DebugPanel() {
                   className="w-full h-7 text-xs border-green-500/50 bg-green-900/20 hover:bg-green-800/30 text-gray-100"
                 >
                   Toggle Fog of War
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleGrid}
+                  className={cn(
+                    'w-full h-7 text-xs border-green-500/50  hover:bg-green-800/30 text-gray-100',
+                    showGrid && 'bg-green-500/50',
+                    !showGrid && 'bg-green-900/20'
+                  )}
+                >
+                  Toggle grid
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleFreeCameraControl}
+                  className={cn(
+                    'w-full h-7 text-xs border-green-500/50  hover:bg-green-800/30 text-gray-100',
+                    enableFreeCameraControl && 'bg-green-500/50',
+                    !enableFreeCameraControl && 'bg-green-900/20'
+                  )}
+                >
+                  Enable free camera
                 </Button>
               </div>
             </div>

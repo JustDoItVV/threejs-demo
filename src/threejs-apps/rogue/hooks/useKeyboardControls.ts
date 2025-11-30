@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 
-import { useRogueStore } from '../store/rogue-store';
+import { useStore } from '../store';
 
 export function useKeyboardControls() {
-  const gameState = useRogueStore((state) => state.gameState);
-  const startGame = useRogueStore((state) => state.startGame);
-  const makeTurn = useRogueStore((state) => state.makeTurn);
-  const restart = useRogueStore((state) => state.restart);
-  const saveGame = useRogueStore((state) => state.saveGame);
-  const setGameState = useRogueStore((state) => state.setGameState);
+  const gameState = useStore((state) => state.gameState);
+  const startGame = useStore((state) => state.startGame);
+  const makeTurn = useStore((state) => state.makeTurn);
+  const restart = useStore((state) => state.restart);
+  const saveGame = useStore((state) => state.saveGame);
+  const setGameState = useStore((state) => state.setGameState);
 
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {

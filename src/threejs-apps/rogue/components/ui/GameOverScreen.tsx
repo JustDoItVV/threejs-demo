@@ -2,19 +2,17 @@
 
 import { Button } from '@/ui/button';
 
-import {
-  selectCharacter,
-  selectLevelNumber,
-  selectWin,
-  useRogueStore,
-} from '../../store/rogue-store';
+import { selectController, selectRenderTrigger, useStore } from '../../store';
 
 export function GameOverScreen() {
-  const win = useRogueStore(selectWin);
-  const levelNumber = useRogueStore(selectLevelNumber);
-  const character = useRogueStore(selectCharacter);
-  const restart = useRogueStore((state) => state.restart);
-  const startGame = useRogueStore((state) => state.startGame);
+  useStore(selectRenderTrigger);
+  const controller = useStore(selectController);
+  const statuses = controller?.getStatuses();
+  const win = statuses?.win;
+  const levelNumber = statuses?.level;
+  const character = controller?.getEntitiesToRender().character;
+  const restart = useStore((state) => state.restart);
+  const startGame = useStore((state) => state.startGame);
 
   const isWin = win === true;
   const title = isWin ? 'VICTORY!' : 'GAME OVER';

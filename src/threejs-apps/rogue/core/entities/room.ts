@@ -1,10 +1,9 @@
 import { FieldRoomSpace, FieldSizeRooms, RoomSize } from '../../config/game.config';
 
-import type { Corridor } from './corridor';
-import type { Level } from './level';
+import type { ICorridorEntity, ILevelEntity, IRoomEntity } from '../../types/entities';
 
-export class Room {
-  level: Level;
+export class RoomEntity implements IRoomEntity {
+  level: ILevelEntity;
   id: number;
   number: number;
   sizeY: number = 0;
@@ -14,15 +13,15 @@ export class Room {
   fieldY: number = 0;
   fieldX: number = 0;
   corridor: {
-    up: Corridor | null;
-    right: Corridor | null;
-    down: Corridor | null;
-    left: Corridor | null;
+    up: ICorridorEntity | null;
+    right: ICorridorEntity | null;
+    down: ICorridorEntity | null;
+    left: ICorridorEntity | null;
   };
   isSeen: boolean = false;
   isVisited: boolean = false;
 
-  constructor(level: Level, number: number) {
+  constructor(level: ILevelEntity, number: number) {
     this.level = level;
     this.number = number;
     this.id = number;
@@ -35,7 +34,7 @@ export class Room {
     this.create();
   }
 
-  create(): void {
+  create() {
     this.sizeY = Math.round(Math.random() * (RoomSize.Max - RoomSize.Min)) + RoomSize.Min;
     this.sizeX = Math.round(Math.random() * (RoomSize.Max - RoomSize.Min)) + RoomSize.Min;
     this.posY = Math.round(Math.random() * (FieldRoomSpace.Size - this.sizeY - FieldRoomSpace.Gap));

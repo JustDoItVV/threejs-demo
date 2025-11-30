@@ -1,13 +1,17 @@
 'use client';
 
+import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { getItemSprite } from '../../config/assets';
-import { selectCharacter, selectLevelNumber, useRogueStore } from '../../store/rogue-store';
+import { selectController, selectRenderTrigger, useStore } from '../../store';
 
 export function StatusBar() {
-  const character = useRogueStore(selectCharacter);
-  const levelNumber = useRogueStore(selectLevelNumber);
+  useStore(selectRenderTrigger);
+  const controller = useStore(selectController);
+  const statuses = controller?.getStatuses();
+  const character = controller?.getEntitiesToRender().character;
+  const levelNumber = statuses?.level;
 
   const weaponSpritePath = useMemo(() => {
     if (!character?.weapon?.name) return null;
@@ -30,7 +34,7 @@ export function StatusBar() {
   return (
     <div className="absolute bottom-0 left-0 right-0 pointer-events-auto">
       <div className="bg-black/90 text-white px-6 py-3 border-t border-white/20">
-        <div className="flex items-center justify-between gap-6 text-sm font-mono max-w-screen-xl mx-auto">
+        <div className="flex items-center justify-between gap-6 text-sm font-mono max-w-7xl mx-auto">
           {/* Level */}
           <div className="flex items-center gap-2">
             <span className="text-gray-400">Level:</span>
@@ -42,11 +46,11 @@ export function StatusBar() {
             <span className="text-gray-400">HP:</span>
             <div className="flex-1 h-4 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
               <div
-                className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-300"
+                className="h-full bg-linear-to-r from-red-600 to-red-500 transition-all duration-300"
                 style={{ width: `${hpPercent}%` }}
               />
             </div>
-            <span className="text-red-400 font-bold min-w-[4rem] text-right">
+            <span className="text-red-400 font-bold min-w-16 text-right">
               {character.hp}/{character.maxHp}
             </span>
           </div>
@@ -75,11 +79,13 @@ export function StatusBar() {
             <div className="flex items-center gap-1.5">
               {weaponSpritePath && (
                 <div className="w-6 h-6 bg-gray-900/50 rounded flex items-center justify-center">
-                  <img
+                  <Image
                     src={weaponSpritePath}
                     alt={weaponName}
                     className="max-w-full max-h-full object-contain"
                     style={{ imageRendering: 'pixelated' }}
+                    width={24}
+                    height={24}
                   />
                 </div>
               )}

@@ -1,20 +1,31 @@
 'use client';
 
+import { KeyboardControls } from '@react-three/drei';
+
 import { CanvasWrapper } from '../../components/three/canvas-wrapper';
-import { GameScene } from './components/three/GameScene';
+import { GameScene } from './components/scenes/game-scene';
 import { GameUI } from './components/ui/GameUI';
-import { useKeyboardControls } from './hooks/useKeyboardControls';
+import { KeyboardMap } from './config/keyboard.config';
+import { useStore } from './store';
+import { EViewMode } from './types';
 
 export type RogueGameState = 'start' | 'game' | 'backpack' | 'end';
 
 export function RogueGame() {
-  useKeyboardControls();
+  const viewMode = useStore((state) => state.viewMode);
+
+  let containerClasses = '';
+  if (viewMode === EViewMode.Normal) containerClasses = 'relative w-full h-full';
+  if (viewMode === EViewMode.Fullwindow) containerClasses = 'fixed inset-0 z-50';
+  if (viewMode === EViewMode.Fullscreen) containerClasses = 'fixed inset-0 z-50';
 
   return (
-    <div className="relative w-full h-full bg-black">
-      <CanvasWrapper className="bg-black">
-        <GameScene />
-      </CanvasWrapper>
+    <div className={`${containerClasses} bg-black`}>
+      <KeyboardControls map={KeyboardMap}>
+        <CanvasWrapper className="bg-black">
+          <GameScene />
+        </CanvasWrapper>
+      </KeyboardControls>
       <GameUI />
     </div>
   );

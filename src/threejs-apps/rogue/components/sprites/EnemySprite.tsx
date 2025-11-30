@@ -6,10 +6,10 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
 import { getEnemySprite } from '../../config/assets';
-import { Enemy } from '../../types/game-types';
+import { IEnemyEntity } from '../../types/entities';
 
 interface EnemySpriteProps {
-  enemy: Enemy;
+  enemy: IEnemyEntity;
 }
 
 export function EnemySprite({ enemy }: EnemySpriteProps) {
@@ -87,7 +87,13 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
       scale={[1.5, 1.5, 1]}
       visible={visible}
     >
-      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
+      <spriteMaterial
+        attach="material"
+        map={texture}
+        transparent
+        alphaTest={0.5}
+        depthWrite={false}
+      />
     </sprite>
   );
 }

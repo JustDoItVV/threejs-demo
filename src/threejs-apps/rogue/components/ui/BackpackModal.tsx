@@ -5,40 +5,49 @@ import { useState } from 'react';
 
 import { Button } from '@/ui/button';
 
-import { selectCharacter, useRogueStore } from '../../store/rogue-store';
-import { Item } from '../../types/game-types';
+import { selectController, selectRenderTrigger, useStore } from '../../store';
+import { EGameState, Item } from '../../types/game-types';
 import { getItemSpritePath } from '../../utils/utils';
 
 export function BackpackModal() {
   const [filter, setFilter] = useState<string>('all');
-  const character = useRogueStore(selectCharacter);
-  const makeTurn = useRogueStore((state) => state.makeTurn);
-  const setGameState = useRogueStore((state) => state.setGameState);
+  useStore(selectRenderTrigger);
+  const controller = useStore(selectController);
+  const statuses = controller?.getStatuses();
+  const character = controller?.getEntitiesToRender().character;
+  const makeTurn = useStore((state) => state.makeTurn);
+  const updateDebugInfo = useStore((state) => state.updateDebugOnModel);
+  const triggerRender = useStore((state) => state._triggerRender);
 
   const items = character?.backpack?.items || [];
 
-  // Create array of items with their original indices for filtering
-  // @ts-expect-error -- tmp
   const itemsWithIndices = items.map((item, idx) => ({ item, originalIndex: idx }));
   const filteredItems = (
     filter === 'all'
       ? itemsWithIndices
-      : // @ts-expect-error -- tmp
-        itemsWithIndices.filter(({ item }) => item && item.type === filter)
+      : itemsWithIndices.filter(({ item }) => item && item.type === filter)
   ) as { originalIndex: number; item: Item }[];
 
   const handleUseItem = (originalIndex: number) => {
-    // Use original backpack index (1-based) for game logic
+    if (!controller) return;
     makeTurn(`${originalIndex + 1}`);
-    // Close backpack after using item
-    setGameState('game');
+    controller.model.gameSession.state = EGameState.Game;
+    updateDebugInfo();
+    triggerRender();
   };
 
   const handleDropItem = (originalIndex: number, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering Use action
-    // Drop item using 'd' prefix + index (1-based)
+    event.stopPropagation();
     makeTurn(`d${originalIndex + 1}`);
-    // Keep backpack open to show updated inventory
+    updateDebugInfo();
+    triggerRender();
+  };
+
+  const handleCloseButtonClick = () => {
+    if (!controller) return;
+    controller.model.gameSession.state = EGameState.Game;
+    updateDebugInfo();
+    triggerRender();
   };
 
   return (
@@ -46,7 +55,7 @@ export function BackpackModal() {
       <div className="bg-black/90 text-white p-6 rounded-lg border-2 border-yellow-600 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-yellow-400">Backpack</h2>
-          <Button variant="ghost" onClick={() => setGameState('game')}>
+          <Button variant="ghost" onClick={handleCloseButtonClick}>
             Close (Esc)
           </Button>
         </div>
@@ -130,6 +139,8 @@ export function BackpackModal() {
                         alt={item.subtype || item.type}
                         className="max-w-full max-h-full object-contain pixelated"
                         style={{ imageRendering: 'pixelated' }}
+                        width={24}
+                        height={24}
                       />
                     </div>
                   )}

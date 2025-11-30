@@ -1,14 +1,15 @@
 'use client';
 
-import { selectLogMessages, useRogueStore } from '../../store/rogue-store';
+import { selectController, selectRenderTrigger, useStore } from '../../store';
 
 export function LogBox() {
-  const logMessages = useRogueStore(selectLogMessages);
-  const messages = logMessages.slice(-10) as string[];
+  useStore(selectRenderTrigger);
+  const controller = useStore(selectController);
+  const statuses = controller?.getStatuses();
+  const logMessages = statuses?.logMessages;
+  const messages = logMessages?.slice(-10) as string[];
 
-  if (messages.length === 0) {
-    return null;
-  }
+  if (messages.length === 0) return null;
 
   return (
     <div className="absolute bottom-16 right-4 pointer-events-auto">

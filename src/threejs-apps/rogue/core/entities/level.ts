@@ -2,26 +2,24 @@ import {
     ENEMIES_COUNT_BASE, FieldSizeRooms, ITEMS_COUNT_BASE, LEVEL_ROOMS
 } from '../../config/game.config';
 import { getRandomPosition } from '../../utils/utils';
-import { Corridor } from './corridor';
-import { Enemy } from './enemy';
-import { Item } from './item';
-import { Room } from './room';
+import { CorridorEntity } from './corridor';
+import { EnemyEntity } from './enemy';
+import { ItemEntity } from './item';
+import { RoomEntity } from './room';
 
-import type { Character } from './character';
-import type { GameSession } from './game-session';
-import type { Position } from '../../types/game-types';
+import type { ICharacterEntity, ICorridorEntity, IEnemyEntity, IGameSessionEntity, IItemEntity, ILevelEntity, IPosition, IRoomEntity } from '../../types/entities';
 
-export class Level {
-  gameSession: GameSession;
+export class LevelEntity implements ILevelEntity {
+  gameSession: IGameSessionEntity;
   level: number;
-  rooms: Room[];
-  corridors: Corridor[];
-  door: Item | null;
-  character: Character;
-  items: Item[];
-  enemies: Enemy[];
+  rooms: IRoomEntity[];
+  corridors: ICorridorEntity[];
+  door: IItemEntity | null;
+  character: ICharacterEntity;
+  items: IItemEntity[];
+  enemies: IEnemyEntity[];
 
-  constructor(gameSession: GameSession, character: Character) {
+  constructor(gameSession: IGameSessionEntity, character: ICharacterEntity) {
     this.gameSession = gameSession;
     this.level = 1;
     this.character = character;
@@ -32,7 +30,7 @@ export class Level {
     this.door = null;
   }
 
-  create(): void {
+  create() {
     this.reset();
     this.createRooms();
     this.createCorridors();
@@ -42,43 +40,45 @@ export class Level {
     this.placeEnemies();
   }
 
-  reset(): void {
+  reset() {
     this.rooms = [];
     this.corridors = [];
     this.enemies = [];
     this.items = [];
   }
 
-  createRooms(): void {
+  createRooms() {
     for (let i = 0; i < LEVEL_ROOMS; ++i) {
-      this.rooms.push(new Room(this, i));
+      this.rooms.push(new RoomEntity(this, i));
     }
   }
 
-  createCorridors(): void {
+  createCorridors() {
     for (let row = 0; row < FieldSizeRooms.y; ++row) {
       for (let col = 0; col < FieldSizeRooms.x; ++col) {
         if (row - 1 >= 0)
-          this.corridors.push(new Corridor(this.rooms[row * FieldSizeRooms.y + col], this.rooms[(row - 1) * FieldSizeRooms.y + col]));
+          this.corridors.push(new CorridorEntity(this.rooms[row * FieldSizeRooms.y + col], this.rooms[(row - 1) * FieldSizeRooms.y + col]));
         if (row + 1 <= FieldSizeRooms.y - 1)
-          this.corridors.push(new Corridor(this.rooms[row * FieldSizeRooms.y + col], this.rooms[(row + 1) * FieldSizeRooms.y + col]));
+          this.corridors.push(new CorridorEntity(this.rooms[row * FieldSizeRooms.y + col], this.rooms[(row + 1) * FieldSizeRooms.y + col]));
         if (col - 1 >= 0)
-          this.corridors.push(new Corridor(this.rooms[row * FieldSizeRooms.y + col], this.rooms[row * FieldSizeRooms.y + col - 1]));
+          this.corridors.push(new CorridorEntity(this.rooms[row * FieldSizeRooms.y + col], this.rooms[row * FieldSizeRooms.y + col - 1]));
         if (col + 1 <= FieldSizeRooms.x - 1)
-          this.corridors.push(new Corridor(this.rooms[row * FieldSizeRooms.y + col], this.rooms[row * FieldSizeRooms.y + col + 1]));
+          this.corridors.push(new CorridorEntity(this.rooms[row * FieldSizeRooms.y + col], this.rooms[row * FieldSizeRooms.y + col + 1]));
       }
     }
   }
 
-  placeCharacter(): void {
+  placeCharacter() {
     this.character.position = getRandomPosition(this);
-    this.character.position.room.isSeen = true;
+    const { room } = this.character.position;
+    if (!room) return;
+    room.isSeen = true;
   }
 
-  createDoor(): void {
+  createDoor() {
     const charPosition = this.character.position;
     const position = getRandomPosition(this);
-    const door = new Item(position, true);
+    const door = new ItemEntity(position, true);
 
     if (position.room === charPosition.room && position.y === charPosition.y && position.x === charPosition.x) {
       this.createDoor();
@@ -87,10 +87,10 @@ export class Level {
     }
   }
 
-  placeItems(): void {
+  placeItems() {
     const charPosition = this.character.position;
     const doorPosition = this.door!.position;
-    let position: Position;
+    let position: IPosition;
     let isFreeCell: boolean;
 
     for (let i = 0; i < ITEMS_COUNT_BASE - this.level; ++i) {
@@ -102,13 +102,13 @@ export class Level {
         isFreeCell = isFreeCell && !(position.room === doorPosition.room && position.y === doorPosition.y && position.x === doorPosition.x);
       } while (!isFreeCell);
 
-      this.items.push(new Item(position));
+      this.items.push(new ItemEntity(position));
     }
   }
 
   placeEnemies(): void {
     const charPosition = this.character.position;
-    let position: Position;
+    let position: IPosition;
     let isFreeCell: boolean;
 
     for (let i = 0; i < this.level + ENEMIES_COUNT_BASE; ++i) {
@@ -120,7 +120,7 @@ export class Level {
         isFreeCell = isFreeCell && !this.enemies.some((enemy) => enemy.position.y === position.y && enemy.position.x === position.x && enemy.position.room === position.room);
       } while (!isFreeCell);
 
-      this.enemies.push(new Enemy(position));
+      this.enemies.push(new EnemyEntity(position));
     }
   }
 }

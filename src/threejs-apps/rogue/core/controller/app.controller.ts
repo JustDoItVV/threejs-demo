@@ -1,17 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Datalayer from '../../infrastructure/repositories/datalayer';
+import { IDatalayer } from '../../types/entities';
 import AppModel from './app.model';
 
 export default class AppController {
-  model: any = null;
-  datalayer: any = null;
+  model: AppModel;
+  datalayer: IDatalayer;
 
   constructor() {
     this.datalayer = new Datalayer();
     this.model = new AppModel(this.datalayer);
   }
 
-  useUserInput(input: any) {
+  useUserInput(input: string) {
     this.model.useUserInput(input);
   }
 
@@ -51,7 +51,7 @@ export default class AppController {
   }
 
   loadGame() {
-    const data = this.datalayer.loadSession();
+    const data = this.datalayer?.loadSession();
     if (data) this.model.gameSession.applyData(data);
     return data;
   }

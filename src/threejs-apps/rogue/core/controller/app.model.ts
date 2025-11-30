@@ -1,19 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { GameSession } from '../entities/entities';
+import Datalayer from '../../infrastructure/repositories/datalayer';
+import { IDatalayer, IGameSessionEntity } from '../../types/entities';
+import { GameSessionEntity } from '../entities/entities';
 
 export default class AppModel {
-  gameSession: any = null;
+  gameSession: IGameSessionEntity;
 
-  constructor(datalayer: any) {
-    this.gameSession = new GameSession(datalayer);
+  constructor(datalayer: IDatalayer) {
+    this.gameSession = new GameSessionEntity(datalayer);
   }
 
-  useUserInput(input: any) {
+  useUserInput(input: string) {
     this.gameSession.useUserInput(input);
   }
 
-  static from(json: any) {
-    // @ts-expect-error -- tmp
-    return Object.assign(new GameSession(), json);
+  static from(json: string) {
+    return Object.assign(new GameSessionEntity(new Datalayer()), json);
   }
 }

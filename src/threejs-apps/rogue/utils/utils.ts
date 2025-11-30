@@ -1,5 +1,6 @@
 import { getItemSprite } from '../config/assets';
 import { LEVEL_ROOMS } from '../config/game.config';
+import { ILevelEntity } from '../types/entities';
 import { Item } from '../types/game-types';
 
   // @ts-expect-error -- tmp
@@ -8,12 +9,11 @@ export const isSamePosition = (entity1, entity2) =>
   entity1.position.y === entity2.position.y &&
   entity1.position.x === entity2.position.x;
 
-  // @ts-expect-error -- tmp
-export const getRandomPosition = (level) => {
+export const getRandomPosition = (level: ILevelEntity) => {
   const room = level.rooms[Math.floor(Math.random() * LEVEL_ROOMS)];
   const y = Math.floor(Math.random() * (room.sizeY - 1));
   const x = Math.floor(Math.random() * (room.sizeX - 1));
-  return { room, y, x };
+  return { room, y, x, z: 0 };
 }
 
 export const getProbabilityResult = (n: number) => !!n && Math.random() <= n;

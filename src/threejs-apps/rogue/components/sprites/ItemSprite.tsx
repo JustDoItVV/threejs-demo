@@ -4,19 +4,16 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { getItemSprite } from '../../config/assets';
-import { Item } from '../../types/game-types';
+import { IItemEntity } from '../../types/entities';
 import { loadTexture } from '../../utils/texture-loader';
 
 interface ItemSpriteProps {
-  item: Item;
+  item: IItemEntity;
 }
 
 export function ItemSprite({ item }: ItemSpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
 
-  // Use subtype or name to determine sprite variant
-  // For example, if item.subtype is "gold_coins", we can parse it
-  // For now, use a simple hash based on item name for variety
   const variant = useMemo(() => {
     if (!item.name) return 0;
     let hash = 0;
@@ -27,6 +24,7 @@ export function ItemSprite({ item }: ItemSpriteProps) {
     return Math.abs(hash);
   }, [item.name]);
 
+  // @ts-expect-error -- tmp
   const texturePath = useMemo(() => getItemSprite(item.type, variant), [item.type, variant]);
 
   const texture = useMemo(() => {
@@ -59,10 +57,16 @@ export function ItemSprite({ item }: ItemSpriteProps) {
     <sprite
       ref={spriteRef}
       position={[worldX, worldY, worldZ]}
-      scale={[0.9, 0.9, 0.9]}
+      scale={[0.5, 0.5, 0.5]}
       visible={visible}
     >
-      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
+      <spriteMaterial
+        attach="material"
+        map={texture}
+        transparent
+        alphaTest={0.5}
+        depthWrite={false}
+      />
     </sprite>
   );
 }

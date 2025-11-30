@@ -1,10 +1,9 @@
 import { BACKPACK_SIZE } from '../../config/game.config';
+import { IBackpackEntity, IItemEntity } from '../../types/entities';
 
-import type { Item } from '../../types/game-types';
-
-export class Backpack {
-  items: Item[] = [];
-  size: number = BACKPACK_SIZE;
+export class BackpackEntity implements IBackpackEntity {
+  items: IItemEntity[] = [];
+  size = BACKPACK_SIZE;
   filter: string | null = null;
 
   constructor() {
@@ -12,14 +11,14 @@ export class Backpack {
     this.size = BACKPACK_SIZE;
   }
 
-  putItem(item: Item): boolean {
+  putItem(item: IItemEntity) {
     if (this.items.length === BACKPACK_SIZE) return false;
 
     this.items.push(item);
     return true;
   }
 
-  showItems(type: string): Item[] {
+  showItems(type: string) {
     this.filter = type;
 
     if (this.filter === 'any') return this.items;
@@ -27,7 +26,7 @@ export class Backpack {
     return this.items.filter((item) => item.type === type);
   }
 
-  getItem(typeIndex: number): Item | undefined {
+  getItem(typeIndex: number) {
     const items = this.showItems(this.filter || 'any');
     if (typeIndex >= items.length) {
       return;
@@ -41,7 +40,7 @@ export class Backpack {
     return item;
   }
 
-  removeItem(itemIndex: number): Item | null {
+  removeItem(itemIndex: number) {
     if (itemIndex < 0 || itemIndex >= this.items.length) {
       return null;
     }

@@ -1,4 +1,6 @@
-export default class Datalayer {
+import { IDatalayer, IGameSessionEntity, IHighscore } from '../../types/entities';
+
+export default class Datalayer implements IDatalayer {
   STORAGE_PREFIX = 'rogue_game_';
   SESSION_KEY = 'session';
   HIGHSCORE_KEY = 'highscores';
@@ -7,8 +9,7 @@ export default class Datalayer {
     // Browser-based storage initialization
   }
 
-  // @ts-expect-error -- tmp
-  saveSession(gameSession) {
+  saveSession(gameSession: IGameSessionEntity) {
     try {
       // Convert gameSession to JSON (circular refs handled by custom serialization if needed)
       const sessionData = JSON.stringify(gameSession);
@@ -33,14 +34,12 @@ export default class Datalayer {
     return data;
   }
 
-  // @ts-expect-error -- tmp
-  saveHighscore(data) {
+  saveHighscore(data: IHighscore) {
     const highscores = this.loadHighscore();
 
     try {
       highscores.push(data);
-  // @ts-expect-error -- tmp
-      highscores.sort((a, b) => b[0] - a[0]);
+      highscores.sort((a, b) => b.score - a.score);
 
       localStorage.setItem(
         this.STORAGE_PREFIX + this.HIGHSCORE_KEY,
@@ -52,14 +51,13 @@ export default class Datalayer {
   }
 
   loadHighscore() {
-    let data;
+    let data: IHighscore[];
 
     try {
       const highscoreData = localStorage.getItem(this.STORAGE_PREFIX + this.HIGHSCORE_KEY);
       if (highscoreData) {
         data = JSON.parse(highscoreData);
-  // @ts-expect-error -- tmp
-        data.sort((a, b) => b[0] - a[0]);
+        data.sort((a, b) => b.score - a.score);
       } else {
         data = [];
       }

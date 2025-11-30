@@ -145,14 +145,14 @@ export const ITEM_ASSETS = {
 
 export const DOOR_ASSETS = {
   door: {
-    down: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/Door_D.png`,
-    side: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/Door_S.png`,
-    up: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/Door_U.png`,
+    down: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
+    side: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
+    up: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
   },
   bigDoor: {
-    down: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/BigDoor_D.png`,
-    side: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/BigDoor_S.png`,
-    up: `${ASSET_BASE}/2-Dungeon-Tileset/3-Animated-objects/BigDoor_U.png`,
+    down: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
+    side: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
+    up: `${ASSET_BASE}/2-Dungeon-Tileset/1-Tiles/Tile_17.png`,
   },
 };
 

@@ -1,4 +1,4 @@
-// Game Configuration
+export const TILE_SIZE = 1;
 
 export const MAX_LEVEL = 7;
 

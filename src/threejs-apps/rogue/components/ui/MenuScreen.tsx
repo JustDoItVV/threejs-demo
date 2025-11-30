@@ -4,22 +4,23 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/ui/button';
 
-import { useRogueStore } from '../../store/rogue-store';
-
-import type { HighScoreEntry } from '../../types/game-types';
+import { selectRenderTrigger, useStore } from '../../store';
+import { IHighscore } from '../../types/entities';
 
 export function MenuScreen() {
-  const [highscores, setHighscores] = useState<HighScoreEntry[]>([]);
-  const startGame = useRogueStore((state) => state.startGame);
-  const datalayer = useRogueStore((state) => state.datalayer);
+  useStore(selectRenderTrigger);
+
+  const [highscores, setHighscores] = useState<IHighscore[]>([]);
+  const startGame = useStore((state) => state.startGame);
+  const controller = useStore((state) => state.controller);
+  const datalayer = controller?.datalayer;
 
   useEffect(() => {
     if (!datalayer) return;
 
     const loadScores = async () => {
       try {
-        // @ts-expect-error -- tmp
-        const scores = await datalayer.loadHighScores(10);
+        const scores = await datalayer.loadHighscore();
         setHighscores(scores);
       } catch (err) {
         console.error('Failed to load highscores:', err);
@@ -44,11 +45,11 @@ export function MenuScreen() {
           <div className="mt-6">
             <h2 className="text-xl font-bold mb-3 text-yellow-400 text-center">High Scores</h2>
             <div className="bg-black/60 rounded p-3">
-              <div className="flex flex-col gap-1 font-mono text-sm">
+              <div className="flex flex-col gap-1 font-mono text-sm max-h-[200px] overflow-y-scroll">
                 {highscores.map((score, idx) => (
                   <div key={idx} className="flex justify-between text-gray-300">
                     <span>
-                      {idx + 1}. Level {score.level}
+                      {idx + 1}. {score.score}
                     </span>
                     <span className="text-yellow-400">{score.score} pts</span>
                   </div>

@@ -6,10 +6,10 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
 import { getCharacterSprite } from '../../config/assets';
-import { Character } from '../../types/game-types';
+import { ICharacterEntity } from '../../types/entities';
 
 interface CharacterSpriteProps {
-  character: Character;
+  character: ICharacterEntity;
 }
 
 export function CharacterSprite({ character }: CharacterSpriteProps) {
@@ -81,7 +81,13 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
 
   return (
     <sprite ref={spriteRef} position={[worldX, worldY, worldZ]} scale={[1.5, 1.5, 1]}>
-      <spriteMaterial attach="material" map={texture} transparent alphaTest={0.5} depthWrite={false} />
+      <spriteMaterial
+        attach="material"
+        map={texture}
+        transparent
+        alphaTest={0.5}
+        depthWrite={false}
+      />
     </sprite>
   );
 }

@@ -1,17 +1,10 @@
 import { Enemies } from '../../config/game.config';
+import { IEnemyEntity, IEnemyMovement, ILevelEntity, IPosition } from '../../types/entities';
 import { getProbabilityResult } from '../../utils/utils';
-import { Item } from './item';
+import { ItemEntity } from './item';
 
-import type { Position } from '../../types/game-types';
-import type { Level } from './level';
-
-interface EnemyMovement {
-  type: 'normal' | 'random' | 'diagonal';
-  distance: number | null;
-}
-
-export class Enemy {
-  level: Level | null = null;
+export class EnemyEntity implements IEnemyEntity {
+  level: ILevelEntity | null = null;
   type: string;
   subtype: string;
   hp: number;
@@ -19,12 +12,12 @@ export class Enemy {
   dex: number;
   str: number;
   hostility: number;
-  movement: EnemyMovement;
-  position: Position;
+  movement: IEnemyMovement;
+  position: IPosition;
   sawCharacter: boolean = false;
   weapon: { name: string; damage: number; type: 'weapon' } = { name: 'fists', damage: 0, type: 'weapon' };
 
-  constructor(position: Position) {
+  constructor(position: IPosition) {
     this.position = position;
 
     const enemyTypes = Object.keys(Enemies);
@@ -42,9 +35,11 @@ export class Enemy {
     this.sawCharacter = false;
   }
 
-  makeTurn(): void {
-  // @ts-expect-error -- tmp
-    const charPosition = this.position.room.level.character.position;
+  makeTurn() {
+    const { room } = this.position;
+    if (!room) return;
+
+    const charPosition = room.level.character.position;
     if (this.position.room === charPosition.room) {
       const dy = Math.abs(charPosition.y - this.position.y);
       const dx = Math.abs(charPosition.x - this.position.x);
@@ -61,26 +56,28 @@ export class Enemy {
     }
   }
 
-  attack(): void {
+  attack() {
+    const { room } = this.position;
+    if (!room) return;
+
     const isHit = getProbabilityResult(this.dex / 4);
     if (isHit) {
       const damage = this.str;
-  // @ts-expect-error -- tmp
-      this.position.room.level.character.hp -= damage;
-  // @ts-expect-error -- tmp
-      this.position.room.level.gameSession.logMessages.push(
+      room.level.character.hp -= damage;
+      room.level.gameSession.logMessages.push(
         `${this.subtype[0].toUpperCase() + this.subtype.slice(1)} attacks Player for ${damage} hp`
       );
     } else {
-  // @ts-expect-error -- tmp
-      this.position.room.level.gameSession.logMessages.push(`${this.subtype} missed`);
+      room.level.gameSession.logMessages.push(`${this.subtype} missed`);
     }
   }
 
-  move(): void {
+  move() {
+    const { room } = this.position;
+    if (!room) return;
+
     if (this.sawCharacter) {
-  // @ts-expect-error -- tmp
-      const charPosition = this.position.room.level.character.position;
+      const charPosition = room.level.character.position;
       const dy = Math.sign(charPosition.y - this.position.y);
       const dx = Math.sign(charPosition.x - this.position.x);
       if (Math.abs(dy) > Math.abs(dx)) {
@@ -91,11 +88,13 @@ export class Enemy {
     }
   }
 
-  dropGold(): void {
-    const gold = new Item(this.position);
+  dropGold() {
+    const { room } = this.position;
+    if (!room) return;
+
+    const gold = new ItemEntity(this.position);
     gold.setBySubtype('treasure', 'gold');
     gold.cost = Math.floor(Math.random() * 100);
-  // @ts-expect-error -- tmp
-    this.position.room.level.items.push(gold);
+    room.level.items.push(gold);
   }
 }

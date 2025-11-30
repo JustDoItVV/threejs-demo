@@ -1,25 +1,22 @@
-import type { CorridorEndpoint, CorridorSegment } from '../../types/game-types';
-import type { Room } from './room';
+import type { ICorridorEndpoint, ICorridorEntity, ICorridorSegment, IRoomEntity } from '../../types/entities';
 
-export class Corridor {
-  start: CorridorEndpoint;
-  end: CorridorEndpoint;
-  segments: CorridorSegment[] = [];
+export class CorridorEntity implements ICorridorEntity {
+  start: ICorridorEndpoint;
+  end: ICorridorEndpoint;
+  segments: ICorridorSegment[] = [];
 
-  constructor(roomStart: Room, roomEnd: Room) {
+  constructor(roomStart: IRoomEntity, roomEnd: IRoomEntity) {
     this.start = { room: roomStart, x: 0, y: 0 };
     this.end = { room: roomEnd, x: 0, y: 0 };
     this.setDoors();
   }
 
-  setDoors(): void {
-  // @ts-expect-error -- tmp
+  setDoors() {
     const delta = this.end.room.number - this.start.room.number;
 
     if (delta === 1) {
       this.start.y = Math.floor((this.start.room.sizeY - 1) / 2);
       this.start.x = this.start.room.sizeX;
-  // @ts-expect-error -- tmp
       this.start.room.corridor.right = this;
       this.end.y = Math.floor((this.end.room.sizeY - 1) / 2);
       this.end.x = -1;
@@ -27,7 +24,6 @@ export class Corridor {
     } else if (delta === -1) {
       this.start.y = Math.floor((this.start.room.sizeY - 1) / 2);
       this.start.x = -1;
-  // @ts-expect-error -- tmp
       this.start.room.corridor.left = this;
       this.end.y = Math.floor((this.end.room.sizeY - 1) / 2);
       this.end.x = this.end.room.sizeX;
@@ -35,7 +31,6 @@ export class Corridor {
     } else if (delta > 1) {
       this.start.y = this.start.room.sizeY;
       this.start.x = Math.floor((this.start.room.sizeX - 1) / 2);
-  // @ts-expect-error -- tmp
       this.start.room.corridor.up = this;
       this.end.y = -1;
       this.end.x = Math.floor((this.end.room.sizeX - 1) / 2);
@@ -43,7 +38,6 @@ export class Corridor {
     } else if (delta < 1) {
       this.start.y = -1;
       this.start.x = Math.floor((this.start.room.sizeX - 1) / 2);
-  // @ts-expect-error -- tmp
       this.start.room.corridor.down = this;
       this.end.y = this.end.room.sizeY;
       this.end.x = Math.floor((this.end.room.sizeX - 1) / 2);
