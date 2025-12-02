@@ -12,14 +12,12 @@ interface ParticlesProps {
 export function Particles({ count = 1000 }: ParticlesProps) {
   const pointsRef = useRef<THREE.Points>(null);
   // eslint-disable-next-line react-hooks/purity
-  const seedRef = useRef(Math.random() * 1000); // Фиксированный seed для детерминированной генерации
+  const seedRef = useRef(Math.random() * 1000);
 
-  // Генерация позиций и цветов частиц с использованием детерминированного подхода
   const { positions, colors } = useMemo(() => {
     const pos = new Float32Array(count * 3);
     const cols = new Float32Array(count * 3);
 
-    // Детерминированная псевдослучайная функция
     const deterministicRandom = (index: number, offset: number) => {
       const x = Math.sin(index * 12.9898 + offset * 78.233 + seedRef.current) * 43758.5453;
       return x - Math.floor(x);
@@ -28,7 +26,6 @@ export function Particles({ count = 1000 }: ParticlesProps) {
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      // Используем детерминированную случайность
       const radius = 3 + deterministicRandom(i, 0) * 2;
       const theta = deterministicRandom(i, 1) * Math.PI * 2;
       const phi = Math.acos(deterministicRandom(i, 2) * 2 - 1);
@@ -37,7 +34,6 @@ export function Particles({ count = 1000 }: ParticlesProps) {
       pos[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
       pos[i3 + 2] = radius * Math.cos(phi);
 
-      // Детерминированные цвета
       const t = deterministicRandom(i, 3);
       if (t < 0.5) {
         // Cyan
@@ -55,7 +51,6 @@ export function Particles({ count = 1000 }: ParticlesProps) {
     return { positions: pos, colors: cols };
   }, [count]);
 
-  // Анимация частиц
   useFrame((state) => {
     if (!pointsRef.current) return;
 
@@ -64,7 +59,6 @@ export function Particles({ count = 1000 }: ParticlesProps) {
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      // Орбитальное движение
       const angle = time * 0.2 + i * 0.01;
 
       positions[i3] += Math.sin(angle) * 0.001;
@@ -80,14 +74,14 @@ export function Particles({ count = 1000 }: ParticlesProps) {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          args={[positions, 3]} // Добавлен args
+          args={[positions, 3]}
           count={positions.length / 3}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-color"
-          args={[colors, 3]} // Добавлен args
+          args={[colors, 3]}
           count={colors.length / 3}
           array={colors}
           itemSize={3}

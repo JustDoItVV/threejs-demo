@@ -1,10 +1,10 @@
 'use client';
 
-import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 
-// Кастомный vertex shader с волновым эффектом
+import { useFrame } from '@react-three/fiber';
+
 const vertexShader = `
   varying vec2 vUv;
   varying vec3 vPosition;
@@ -23,7 +23,6 @@ const vertexShader = `
   }
 `;
 
-// Кастомный fragment shader с градиентом
 const fragmentShader = `
   varying vec2 vUv;
   varying vec3 vPosition;
@@ -48,11 +47,9 @@ export function AnimatedTorus() {
   useFrame((state) => {
     if (!meshRef.current || !materialRef.current) return;
 
-    // Вращение объекта
     meshRef.current.rotation.x += 0.01;
     meshRef.current.rotation.y += 0.005;
 
-    // Обновление времени для шейдеров
     materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
   });
 

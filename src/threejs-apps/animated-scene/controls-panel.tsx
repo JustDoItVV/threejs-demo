@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/ui/button';
+
 import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
 
 interface ControlsPanelProps {
   onReset?: () => void;
 }
 
-export function ControlsPanel({ onReset }: ControlsPanelProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ControlsPanel(_props: ControlsPanelProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   if (!isVisible) {

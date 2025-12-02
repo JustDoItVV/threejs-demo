@@ -8,6 +8,18 @@ export const Projects: Project[] = [
       'Interactive 3D blockchain visualization where each block is represented as a building in a growing city. Building height reflects transaction count, with color-coded activity levels. Features real-time block mining, auto-mining mode, transaction particles, and detailed block exploration. Click buildings to view transactions and block details.',
     thumbnail: '/projects-screens/blockchain-city.png',
     tags: ['Blockchain', 'Web3', 'Interactive', 'Particles'],
+    features: [
+      'Blockchain data structure implementation - custom Block and Transaction classes with cryptographic hashing, timestamp tracking, nonce-based mining with adjustable difficulty, and proper chain validation with previous hash linking',
+      'Visual mapping system with dynamic scaling - building height calculated from transaction count (Math.log scale for better visibility), color gradients based on activity level (green→yellow→orange→red), radial block placement around center with progressively increasing radius, and smooth building positioning with spiral arrangement calculation',
+      'Mining mechanics with proof-of-work simulation - adjustable difficulty parameter, nonce iteration until valid hash found, visual feedback during mining process (building animation), and block reward system with configurable reward amount',
+      'Auto-mining mode with interval control - toggleable auto-mine with start/stop functionality, configurable mining interval (default 2s), automatic block addition to chain, and mining statistics tracking (total blocks, mining time)',
+      'Transaction particle system with physics - particle emission from mined blocks, color-coded particles matching block activity, physics-based movement with velocity and gravity, fade-out animation with opacity control, and automatic cleanup of expired particles',
+      'Interactive block exploration with raycasting - click detection on building meshes using THREE.Raycaster, block details panel with full information (hash, timestamp, nonce, transactions), transaction list with sender/receiver/amount display, and smooth camera focus on selected block',
+      'Real-time blockchain state management - Zustand store with blockchain slice, reactive updates on block mining, transaction pool management, chain validation on each block, and statistics calculation (total transactions, average block time)',
+      'Performance-optimized rendering - instanced building meshes for identical shapes, material reuse with color updates, efficient particle pooling, frustum culling for off-screen objects, and LOD (Level of Detail) consideration for large chains',
+      'Responsive camera system with smooth transitions - OrbitControls with damping enabled, automatic camera repositioning on block select, zoom limits for optimal viewing distance, and target updates with smooth interpolation',
+      'UI feedback system with real-time updates - mining status indicator with progress, block explorer modal with transaction details, statistics dashboard (blocks, transactions, hash rate), and toast notifications for mining events',
+    ],
   },
   {
     slug: 'rogue',
@@ -75,6 +87,18 @@ export const Projects: Project[] = [
       'Interactive TorusKnot with custom GLSL vertex and fragment shaders, 3000 animated particles with color gradients, and orbital camera controls. Features smooth animations and dynamic lighting.',
     thumbnail: '/projects-screens/3d-animation.png',
     tags: ['GLSL', 'Particles', 'OrbitControls'],
+    features: [
+      'Custom GLSL vertex shader with wave animation - sine wave displacement using vertex position and time uniform (uTime), amplitude and frequency control for wave effect, normal recalculation for proper lighting, and smooth vertex transformation with varying for fragment shader communication',
+      'Custom GLSL fragment shader with gradient - cyan-to-pink color gradient based on vertical position (vPosition.y), smooth color interpolation using mix() function, alpha channel control for transparency effects, and time-based color shifting for dynamic appearance',
+      'ShaderMaterial with uniform management - uTime uniform updated every frame in useFrame hook, uniform types properly defined (float for time), material-side set to THREE.DoubleSide for visibility from all angles, and wireframe option for debugging vertex displacement',
+      'Particle system with 3000 particles - BufferGeometry for optimal performance, Float32Array for position data (9000 floats = 3000 * xyz), particle size control via PointsMaterial, and PointsBasicMaterial for simple rendering without lighting calculations',
+      'Spherical particle distribution algorithm - random radius within sphere using Math.random() * 2 - 1 for each axis, uniform distribution across sphere volume, particle color assignment with vertex colors (BufferAttribute), and color gradient from blue to red based on y-position',
+      'Vertex color system for particles - separate color buffer attribute (Float32Array with RGB values), per-particle color control without material changes, smooth color gradients calculated in JavaScript, and vertexColors flag enabled in PointsMaterial for color rendering',
+      'OrbitControls integration with damping - smooth camera rotation with mouse/touch input, damping factor for momentum effect (enableDamping: true), automatic damping updates in animation loop (controls.update()), and configurable rotation speed and zoom limits',
+      'Performance-optimized animation loop - useFrame hook from @react-three/fiber for 60fps updates, time-based animations independent of frame rate, minimal state updates (only uTime uniform), and efficient buffer updates for shader calculations',
+      'TorusKnot geometry with custom parameters - tubeRadius and radialSegments for detail control, p and q parameters for knot complexity (3, 2 for classic trefoil knot), geometry positioned at scene center, and proper UV mapping for shader effects',
+      'Additive particle blending - AdditiveBlending for glowing particle effect, transparent flag for opacity support, particle overlap creates brighter areas, and depth testing disabled for consistent rendering order',
+    ],
   },
 ];
 
