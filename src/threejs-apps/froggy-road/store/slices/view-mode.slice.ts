@@ -23,6 +23,11 @@ export const createViewModeSlice: StateCreator<
     const { viewMode } = get();
     if (viewMode === 'fullwindow') {
       set({ viewMode: 'normal' });
+    } else if (viewMode === 'fullscreen') {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      set({ viewMode: 'fullwindow' });
     } else {
       set({ viewMode: 'fullwindow' });
     }

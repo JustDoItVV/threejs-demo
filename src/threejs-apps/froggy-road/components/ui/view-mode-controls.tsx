@@ -26,7 +26,7 @@ export function ViewModeControls() {
     if (viewMode === 'fullscreen') {
       toggleFullscreen();
     } else {
-      const container = containerRef.current?.closest('.relative');
+      const container = containerRef.current?.parentElement;
       if (container) {
         try {
           await container.requestFullscreen();
@@ -59,7 +59,7 @@ export function ViewModeControls() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+            d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M8 12h8"
           />
         </svg>
       </button>
@@ -83,7 +83,7 @@ export function ViewModeControls() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M8 12h8"
+            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
           />
         </svg>
       </button>

@@ -24,6 +24,17 @@ export const Projects: Project[] = [
       'Crossy Road clone with isometric orthographic camera, procedural infinite lane generation, platform riding mechanics, and post-processing effects. Control with arrow keys or WASD, press R to restart or Esc to exit.',
     thumbnail: '/projects-screens/froggy-road.png',
     tags: ['Game', 'Isometric', 'Procedural'],
+    features: [
+      'Object Pool Pattern implementation - lane templates are pre-generated and reused, eliminating generation cost during critical jump animations and preventing FPS drops on weak systems',
+      'Procedural infinite level generation with 3 lane types (grass, road, water)',
+      'Platform riding mechanics - frog position syncs with moving logs and lilypads',
+      'Collision detection system for obstacles and environmental hazards',
+      'Post-processing effects stack: Bloom, Vignette, and Chromatic Aberration',
+      'Smooth hop animation with cubic ease-out easing function',
+      'Performance-optimized rendering with meshLambertMaterial and visibility culling',
+      'Zustand state management with modular slice architecture',
+      'Weighted randomization for lane type selection with consecutive limits',
+    ],
   },
   {
     slug: 'product-showcase',

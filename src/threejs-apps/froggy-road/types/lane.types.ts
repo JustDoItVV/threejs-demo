@@ -25,4 +25,5 @@ export interface ILane {
   type: ELaneType;
   yIndex: number;
   objects: ILaneObject[];
+  poolIndex?: number;
 }

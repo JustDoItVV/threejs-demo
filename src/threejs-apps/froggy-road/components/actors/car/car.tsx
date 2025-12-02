@@ -40,6 +40,7 @@ export function Car({ car, laneId, objectIndex }: CarProps) {
     }
 
     groupRef.current.position.set(worldXRef.current, 0, 0);
+    groupRef.current.rotation.z = car.direction === -1 ? Math.PI : 0;
 
     if (updateAccumulatorRef.current >= 0.1) {
       updateAccumulatorRef.current = 0;

@@ -70,6 +70,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <div className="w-full h-[600px] bg-muted rounded-lg overflow-hidden">
             <ProjectCanvas slug={project.slug} />
           </div>
+
+          {project.features && project.features.length > 0 && (
+            <div className="flex flex-col gap-4 max-w-4xl">
+              <h2 className="text-2xl font-semibold">Features</h2>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                {project.features.map((feature, index) => (
+                  <li key={index} className="leading-relaxed">
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </main>

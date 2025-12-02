@@ -21,3 +21,6 @@ export const LANE_TYPE_WEIGHTS: Record<ELaneType, number> = {
   [ELaneType.Road]: 0.35,
   [ELaneType.Water]: 0.25,
 };
+
+export const LANE_POOL_SIZE = 10;
+export const POOL_REGENERATION_INTERVAL = 10;
