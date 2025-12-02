@@ -16,6 +16,10 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
   const [currentFrame, setCurrentFrame] = useState(0);
   const timeAccumulator = useRef(0);
+  const visualPosition = useRef<THREE.Vector3>(new THREE.Vector3());
+  const isInitialized = useRef(false);
+  const attackProgress = useRef(0);
+  const wasAttacking = useRef(false);
 
   const animation: 'idle' | 'walk' | 'attack' = 'idle';
   const direction: 'down' | 'side' | 'up' = 'down';
@@ -51,7 +55,7 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
   }, [texturePath, totalFrames, enemy.subtype]);
 
   useFrame((_state, delta: number) => {
-    if (!texture) return;
+    if (!texture || !spriteRef.current) return;
 
     timeAccumulator.current += delta;
 
@@ -63,6 +67,61 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
 
       texture.offset.set(nextFrame / totalFrames, 0);
     }
+
+    if (enemy?.position?.room) {
+      const room = enemy.position.room;
+      const targetX = room.fieldX + enemy.position.x;
+      const targetY = room.fieldY + enemy.position.y;
+      const targetZ = 0.5;
+
+      if (!isInitialized.current) {
+        visualPosition.current.set(targetX, targetY, targetZ);
+        isInitialized.current = true;
+      }
+
+      if (enemy.isAttacking) {
+        if (!wasAttacking.current) {
+          attackProgress.current = 0;
+          wasAttacking.current = true;
+        }
+        attackProgress.current += delta * 10;
+        if (attackProgress.current > 2) attackProgress.current = 2;
+      } else {
+        wasAttacking.current = false;
+        attackProgress.current = 0;
+      }
+
+      let attackOffsetX = 0;
+      let attackOffsetY = 0;
+      if (enemy.isAttacking && enemy.attackDirection) {
+        const offset =
+          attackProgress.current <= 1
+            ? attackProgress.current * 0.5
+            : (2 - attackProgress.current) * 0.5;
+
+        switch (enemy.attackDirection) {
+          case 'up':
+            attackOffsetY = offset;
+            break;
+          case 'down':
+            attackOffsetY = -offset;
+            break;
+          case 'right':
+            attackOffsetX = offset;
+            break;
+          case 'left':
+            attackOffsetX = -offset;
+            break;
+        }
+      }
+
+      const lerpFactor = Math.min(delta * 10, 1);
+      visualPosition.current.x += (targetX + attackOffsetX - visualPosition.current.x) * lerpFactor;
+      visualPosition.current.y += (targetY + attackOffsetY - visualPosition.current.y) * lerpFactor;
+      visualPosition.current.z = targetZ;
+
+      spriteRef.current.position.copy(visualPosition.current);
+    }
   });
 
   if (!enemy?.position?.room) {
@@ -70,9 +129,6 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
   }
 
   const room = enemy.position.room;
-  const worldX = room.fieldX + enemy.position.x;
-  const worldY = room.fieldY + enemy.position.y;
-  const worldZ = 0.5;
   const visible = room.isSeen;
 
   if (!texture) {
@@ -81,12 +137,7 @@ export function EnemySprite({ enemy }: EnemySpriteProps) {
   }
 
   return (
-    <sprite
-      ref={spriteRef}
-      position={[worldX, worldY, worldZ]}
-      scale={[1.5, 1.5, 1]}
-      visible={visible}
-    >
+    <sprite ref={spriteRef} position={[0, 0, 0]} scale={[1.5, 1.5, 1]} visible={visible}>
       <spriteMaterial
         attach="material"
         map={texture}

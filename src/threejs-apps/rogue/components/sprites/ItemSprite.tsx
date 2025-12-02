@@ -24,8 +24,10 @@ export function ItemSprite({ item }: ItemSpriteProps) {
     return Math.abs(hash);
   }, [item.name]);
 
-  // @ts-expect-error -- tmp
-  const texturePath = useMemo(() => getItemSprite(item.type, variant), [item.type, variant]);
+  const texturePath = useMemo(
+    () => getItemSprite(item.type as 'treasure' | 'food' | 'elixir' | 'scroll' | 'weapon', variant),
+    [item.type, variant]
+  );
 
   const texture = useMemo(() => {
     try {

@@ -2,13 +2,13 @@
 
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import { OrbitControls } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 
 export function CameraControls() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
   const [enabled, setEnabled] = useState(true);
 
@@ -27,6 +27,8 @@ export function CameraControls() {
     const startTime = Date.now();
 
     const animate = () => {
+      if (!controlsRef.current) return;
+
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
 

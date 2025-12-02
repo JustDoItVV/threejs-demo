@@ -108,19 +108,87 @@ export class LevelEntity implements ILevelEntity {
 
   placeEnemies(): void {
     const charPosition = this.character.position;
-    let position: IPosition;
-    let isFreeCell: boolean;
 
-    for (let i = 0; i < this.level + ENEMIES_COUNT_BASE; ++i) {
-      isFreeCell = true;
+    const getRoomSizeCategory = (room: IRoomEntity): 'small' | 'medium' | 'large' => {
+      const area = room.sizeX * room.sizeY;
+      if (area <= 16) return 'small';
+      if (area <= 35) return 'medium';
+      return 'large';
+    };
+
+    const getMinEnemies = (room: IRoomEntity): number => {
+      const category = getRoomSizeCategory(room);
+      switch (category) {
+        case 'small': return 1;
+        case 'medium': return 2;
+        case 'large': return 3;
+        default: return 1;
+      }
+    };
+
+    const placeEnemyInRoom = (room: IRoomEntity): boolean => {
+      let position: IPosition;
+      let attempts = 0;
+      const maxAttempts = 50;
+
+      do {
+        position = {
+          room,
+          x: Math.floor(Math.random() * room.sizeX),
+          y: Math.floor(Math.random() * room.sizeY),
+          z: 0,
+        };
+
+        const isFree = !this.enemies.some(
+          (enemy) =>
+            enemy.position.y === position.y &&
+            enemy.position.x === position.x &&
+            enemy.position.room === position.room
+        );
+
+        if (isFree) {
+          this.enemies.push(new EnemyEntity(position));
+          return true;
+        }
+
+        attempts++;
+      } while (attempts < maxAttempts);
+
+      return false;
+    };
+
+    for (const room of this.rooms) {
+      if (room === charPosition.room) continue;
+
+      const minEnemies = getMinEnemies(room);
+      for (let i = 0; i < minEnemies; i++) {
+        placeEnemyInRoom(room);
+      }
+    }
+
+    const totalEnemies = this.level + ENEMIES_COUNT_BASE;
+    const remainingEnemies = totalEnemies - this.enemies.length;
+
+    for (let i = 0; i < remainingEnemies; ++i) {
+      let position: IPosition;
+      let isFreeCell: boolean;
+      let attempts = 0;
 
       do {
         position = getRandomPosition(this);
         isFreeCell = position.room !== charPosition.room;
-        isFreeCell = isFreeCell && !this.enemies.some((enemy) => enemy.position.y === position.y && enemy.position.x === position.x && enemy.position.room === position.room);
-      } while (!isFreeCell);
+        isFreeCell = isFreeCell && !this.enemies.some(
+          (enemy) =>
+            enemy.position.y === position.y &&
+            enemy.position.x === position.x &&
+            enemy.position.room === position.room
+        );
+        attempts++;
+      } while (!isFreeCell && attempts < 100);
 
-      this.enemies.push(new EnemyEntity(position));
+      if (isFreeCell) {
+        this.enemies.push(new EnemyEntity(position));
+      }
     }
   }
 }

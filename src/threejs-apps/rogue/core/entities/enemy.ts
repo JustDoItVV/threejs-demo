@@ -6,7 +6,7 @@ import { ItemEntity } from './item';
 export class EnemyEntity implements IEnemyEntity {
   level: ILevelEntity | null = null;
   type: string;
-  subtype: string;
+  subtype: 'zombie' | 'vampire' | 'ghost' | 'ogr' | 'snake';
   hp: number;
   maxHp: number;
   dex: number;
@@ -16,12 +16,14 @@ export class EnemyEntity implements IEnemyEntity {
   position: IPosition;
   sawCharacter: boolean = false;
   weapon: { name: string; damage: number; type: 'weapon' } = { name: 'fists', damage: 0, type: 'weapon' };
+  isAttacking: boolean = false;
+  attackDirection: 'up' | 'down' | 'left' | 'right' | null = null;
 
   constructor(position: IPosition) {
     this.position = position;
 
     const enemyTypes = Object.keys(Enemies);
-    const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+    const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)] as 'zombie' | 'vampire' | 'ghost' | 'ogr' | 'snake';
     const enemy = Enemies[type];
 
     this.type = 'enemy';
@@ -33,6 +35,8 @@ export class EnemyEntity implements IEnemyEntity {
     this.hostility = enemy.hostility;
     this.movement = enemy.movement;
     this.sawCharacter = false;
+    this.isAttacking = false;
+    this.attackDirection = null;
   }
 
   makeTurn() {
@@ -59,6 +63,22 @@ export class EnemyEntity implements IEnemyEntity {
   attack() {
     const { room } = this.position;
     if (!room) return;
+
+    const charPosition = room.level.character.position;
+    const dx = charPosition.x - this.position.x;
+    const dy = charPosition.y - this.position.y;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      this.attackDirection = dx > 0 ? 'right' : 'left';
+    } else {
+      this.attackDirection = dy > 0 ? 'up' : 'down';
+    }
+
+    this.isAttacking = true;
+    setTimeout(() => {
+      this.isAttacking = false;
+      this.attackDirection = null;
+    }, 200);
 
     const isHit = getProbabilityResult(this.dex / 4);
     if (isHit) {

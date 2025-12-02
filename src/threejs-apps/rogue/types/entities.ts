@@ -92,6 +92,7 @@ export interface IGameSessionEntity {
   restart: () => void;
   makeTurn: (input: string) => void;
   endGame: (win: boolean, message: string) => void;
+  getTotalScore: () => number;
   useBackpack: (input: string) => void;
   dropBackpackItem: (input: string) => void;
   useUserInput: (input: string) => void;
@@ -101,17 +102,21 @@ export interface IGameSessionEntity {
 export interface IHighscore {
   score: number;
   date: Date;
+  playerName?: string;
 }
 
 export interface IDatalayer {
   STORAGE_PREFIX: string;
   SESSION_KEY: string;
   HIGHSCORE_KEY: string;
+  PLAYER_NAME_KEY: string;
 
   saveSession: (gameSession: IGameSessionEntity) => void;
   loadSession: () => IGameSessionEntity;
   saveHighscore: (data: IHighscore) => void;
   loadHighscore: () => IHighscore[];
+  savePlayerName: (name: string) => void;
+  loadPlayerName: () => string | null;
   clearSession: () => void;
   clearHighscores: () => void;
 }
@@ -124,7 +129,7 @@ export interface IEnemyMovement {
 export interface IEnemyEntity {
   level: ILevelEntity | null;
   type: string;
-  subtype: string;
+  subtype: 'zombie' | 'vampire' | 'ghost' | 'ogr' | 'snake';
   hp: number;
   maxHp: number;
   dex: number;
@@ -134,6 +139,8 @@ export interface IEnemyEntity {
   position: IPosition;
   sawCharacter: boolean;
   weapon: { name: string; damage: number; type: 'weapon' };
+  isAttacking: boolean;
+  attackDirection: 'up' | 'down' | 'left' | 'right' | null;
 
   makeTurn: () => void;
   attack: () => void;
@@ -173,6 +180,8 @@ export interface ICharacterEntity {
   backpack: IBackpackEntity;
   weapon: IItemEntity;
   gold: number;
+  isAttacking: boolean;
+  attackDirection: 'up' | 'down' | 'left' | 'right' | null;
 
   reset: () => void;
   move: (direction: 'up' | 'down' | 'left' | 'right') => void;

@@ -54,6 +54,7 @@ export interface Item {
   dexterityUp: number;
   healthUp: number;
   maxHealthUp: number;
+  cost: number;
   type: 'treasure' | 'food' | 'elixir' | 'scroll' | 'weapon';
   name: string;
   position: Position;

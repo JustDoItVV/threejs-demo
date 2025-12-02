@@ -3,6 +3,7 @@ import { StateCreator } from 'zustand';
 import { Store } from '../';
 import AppController from '../../core/controller/app.controller';
 import { IDatalayer } from '../../types/entities';
+import { EGameState } from '../../types/game-types';
 
 export interface IGameSlice {
   renderTrigger: boolean;
@@ -15,6 +16,8 @@ export interface IGameSlice {
   restart: () => void;
   saveGame: () => Promise<void>;
   loadGame: () => Promise<void>;
+  closeBackpack: () => void;
+  exitToMenu: () => Promise<void>;
 
   _triggerRender: () => void;
 }
@@ -63,6 +66,8 @@ export const createGameSlice: StateCreator<
     if (!controller) return;
 
     controller.model.gameSession.restart();
+    // Reset god mode on restart
+    set({ godMode: false });
     updateDebugOnModel();
     _triggerRender();
   },
@@ -97,6 +102,38 @@ export const createGameSlice: StateCreator<
     } catch (error) {
       console.error('[RogueStore] Failed to load game:', error);
     }
+  },
+
+  closeBackpack: () => {
+    const state = get();
+    const { controller, updateDebugOnModel, _triggerRender } = state;
+    if (!controller?.model?.gameSession) return;
+
+    set((prevState) => {
+      if (prevState.controller?.model?.gameSession) {
+        prevState.controller.model.gameSession.state = EGameState.Game;
+        prevState.controller.model.gameSession.backpackItems = null;
+      }
+      return prevState;
+    });
+    updateDebugOnModel();
+    _triggerRender();
+  },
+
+  exitToMenu: async () => {
+    const state = get();
+    const { controller, saveGame, updateDebugOnModel, _triggerRender } = state;
+    if (!controller?.model?.gameSession) return;
+
+    await saveGame();
+    set((prevState) => {
+      if (prevState.controller?.model?.gameSession) {
+        prevState.controller.model.gameSession.state = EGameState.Start;
+      }
+      return prevState;
+    });
+    updateDebugOnModel();
+    _triggerRender();
   },
 
   _triggerRender: () => set({ renderTrigger: !get().renderTrigger }),

@@ -1,13 +1,20 @@
 import { getItemSprite } from '../config/assets';
 import { LEVEL_ROOMS } from '../config/game.config';
-import { ILevelEntity } from '../types/entities';
+import { ILevelEntity, IPosition } from '../types/entities';
 import { Item } from '../types/game-types';
 
-  // @ts-expect-error -- tmp
-export const isSamePosition = (entity1, entity2) =>
-  entity1.position.room === entity2.position.room &&
-  entity1.position.y === entity2.position.y &&
-  entity1.position.x === entity2.position.x;
+interface WithPosition {
+  position: IPosition;
+}
+
+export const isSamePosition = (entity1: WithPosition | null, entity2: WithPosition | null) => {
+  if (!entity1 || !entity2) return false;
+  return (
+    entity1.position.room === entity2.position.room &&
+    entity1.position.y === entity2.position.y &&
+    entity1.position.x === entity2.position.x
+  );
+};
 
 export const getRandomPosition = (level: ILevelEntity) => {
   const room = level.rooms[Math.floor(Math.random() * LEVEL_ROOMS)];
@@ -18,7 +25,6 @@ export const getRandomPosition = (level: ILevelEntity) => {
 
 export const getProbabilityResult = (n: number) => !!n && Math.random() <= n;
 
-// Helper function to get item sprite path based on item name hash
 export const getItemSpritePath = (item: Item): string | null => {
   if (!item?.name) return null;
   let hash = 0;

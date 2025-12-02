@@ -16,6 +16,10 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
   const spriteRef = useRef<THREE.Sprite>(null);
   const [currentFrame, setCurrentFrame] = useState(0);
   const timeAccumulator = useRef(0);
+  const visualPosition = useRef<THREE.Vector3>(new THREE.Vector3());
+  const isInitialized = useRef(false);
+  const attackProgress = useRef(0);
+  const wasAttacking = useRef(false);
 
   const animation: 'idle' | 'walk' | 'attack' = 'idle';
   const direction: 'down' | 'side' | 'up' = 'down';
@@ -40,8 +44,8 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
 
-      tex.repeat.set(1 / totalFrames, 1); // Show 1/4 of texture width
-      tex.offset.set(0, 0); // Start at frame 0
+      tex.repeat.set(1 / totalFrames, 1);
+      tex.offset.set(0, 0);
 
       return tex;
     } catch (error) {
@@ -51,7 +55,7 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
   }, [texturePath, totalFrames]);
 
   useFrame((_state, delta: number) => {
-    if (!texture) return;
+    if (!texture || !spriteRef.current) return;
 
     timeAccumulator.current += delta;
 
@@ -63,16 +67,66 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
 
       texture.offset.set(nextFrame / totalFrames, 0);
     }
+
+    if (character?.position?.room) {
+      const room = character.position.room;
+      const targetX = room.fieldX + character.position.x;
+      const targetY = room.fieldY + character.position.y;
+      const targetZ = 0.5;
+
+      if (!isInitialized.current) {
+        visualPosition.current.set(targetX, targetY, targetZ);
+        isInitialized.current = true;
+      }
+
+      if (character.isAttacking) {
+        if (!wasAttacking.current) {
+          attackProgress.current = 0;
+          wasAttacking.current = true;
+        }
+        attackProgress.current += delta * 10;
+        if (attackProgress.current > 2) attackProgress.current = 2;
+      } else {
+        wasAttacking.current = false;
+        attackProgress.current = 0;
+      }
+
+      let attackOffsetX = 0;
+      let attackOffsetY = 0;
+      if (character.isAttacking && character.attackDirection) {
+        const offset =
+          attackProgress.current <= 1
+            ? attackProgress.current * 0.5
+            : (2 - attackProgress.current) * 0.5;
+
+        switch (character.attackDirection) {
+          case 'up':
+            attackOffsetY = offset;
+            break;
+          case 'down':
+            attackOffsetY = -offset;
+            break;
+          case 'right':
+            attackOffsetX = offset;
+            break;
+          case 'left':
+            attackOffsetX = -offset;
+            break;
+        }
+      }
+
+      const lerpFactor = Math.min(delta * 12, 1);
+      visualPosition.current.x += (targetX + attackOffsetX - visualPosition.current.x) * lerpFactor;
+      visualPosition.current.y += (targetY + attackOffsetY - visualPosition.current.y) * lerpFactor;
+      visualPosition.current.z = targetZ;
+
+      spriteRef.current.position.copy(visualPosition.current);
+    }
   });
 
   if (!character?.position?.room) {
     return null;
   }
-
-  const room = character.position.room;
-  const worldX = room.fieldX + character.position.x;
-  const worldY = room.fieldY + character.position.y;
-  const worldZ = 0.5;
 
   if (!texture) {
     console.warn('[CharacterSprite] Texture not loaded, skipping render');
@@ -80,7 +134,7 @@ export function CharacterSprite({ character }: CharacterSpriteProps) {
   }
 
   return (
-    <sprite ref={spriteRef} position={[worldX, worldY, worldZ]} scale={[1.5, 1.5, 1]}>
+    <sprite ref={spriteRef} position={[0, 0, 0]} scale={[1.5, 1.5, 1]}>
       <spriteMaterial
         attach="material"
         map={texture}

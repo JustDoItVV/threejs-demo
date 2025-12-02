@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MAX_LEVEL } from '../../config/game.config';
-import { IGameSessionEntity, IGameStatisticsEntity } from '../../types/entities';
+import { IDatalayer, IGameSessionEntity, IGameStatisticsEntity } from '../../types/entities';
 import { EGameState } from '../../types/game-types';
 import { CharacterEntity } from './character';
 import { LevelEntity } from './level';
 
 import type { ItemEntity } from './item';
-import type Datalayer from '../../infrastructure/repositories/datalayer';
 
 export class GameSessionEntity implements IGameSessionEntity {
-  datalayer: Datalayer;
+  datalayer: IDatalayer;
   state: EGameState;
   level: LevelEntity;
   character: CharacterEntity;
@@ -18,14 +16,16 @@ export class GameSessionEntity implements IGameSessionEntity {
   backpackItems: ItemEntity[] | null;
   statistics: IGameStatisticsEntity;
 
-  constructor(datalayer: Datalayer) {
+  constructor(datalayer: IDatalayer) {
     this.datalayer = datalayer;
-    this.state = EGameState.Start;
-    this.level = null as any;
-    this.character = null as any;
     this.win = null;
-    this.logMessages = [];
     this.backpackItems = null;
+
+    // Initialize all properties - character and level will be set in init()
+    this.character = {} as CharacterEntity;
+    this.level = {} as LevelEntity;
+    this.state = EGameState.Start;
+    this.logMessages = [];
     this.statistics = {
       enemiesKilled: 0,
       foodEaten: 0,
@@ -34,6 +34,7 @@ export class GameSessionEntity implements IGameSessionEntity {
       hitMissed: 0,
       travelledDistance: 0,
     };
+
     this.init();
   }
 
@@ -79,16 +80,15 @@ export class GameSessionEntity implements IGameSessionEntity {
   makeTurn(input: string): void {
     this.logMessages = [];
 
-    const charPosition = this.character?.position;
-    const doorPosition = this.level.door?.position;
-
     if (this.character.hp <= 0) {
       this.endGame(false, 'Gameover! You lose!');
       return;
     }
 
-  // @ts-expect-error -- tmp
-    this.character.move(input);
+    // Only move if input is a valid direction
+    if (input === 'up' || input === 'down' || input === 'left' || input === 'right') {
+      this.character.move(input);
+    }
     this.level.enemies = this.level.enemies.filter((enemy) => {
       if (enemy.hp <= 0) {
         enemy.dropGold();
@@ -99,6 +99,10 @@ export class GameSessionEntity implements IGameSessionEntity {
     this.level.enemies.forEach((enemy) => enemy.makeTurn());
 
     this.character.pickItemIfAvailable();
+
+    // Check door position AFTER character moves
+    const charPosition = this.character?.position;
+    const doorPosition = this.level.door?.position;
 
     if (charPosition?.room === doorPosition?.room && charPosition?.y === doorPosition?.y && charPosition?.x === doorPosition?.x) {
       if (this.level.level === MAX_LEVEL) {
@@ -112,21 +116,27 @@ export class GameSessionEntity implements IGameSessionEntity {
     }
   }
 
+  getTotalScore(): number {
+    return (
+      this.character.gold +
+      this.level.level * 10 +
+      this.statistics.enemiesKilled * 5 +
+      this.statistics.foodEaten +
+      this.statistics.elixirsDrunk * 3 +
+      this.statistics.scrollsUsed * 3 +
+      this.statistics.travelledDistance
+    );
+  }
+
   endGame(win: boolean, message: string) {
     this.win = win;
     this.state = EGameState.End;
     this.logMessages = [message];
+    const playerName = this.datalayer.loadPlayerName();
     this.datalayer.saveHighscore({
-      score:
-        this.character.gold +
-        this.level.level +
-        this.statistics.enemiesKilled +
-        this.statistics.foodEaten +
-        this.statistics.elixirsDrunk +
-        this.statistics.scrollsUsed +
-        this.statistics.hitMissed +
-        this.statistics.travelledDistance,
+      score: this.getTotalScore(),
       date: new Date(),
+      playerName: playerName || 'Player',
     });
   }
 
@@ -154,7 +164,7 @@ export class GameSessionEntity implements IGameSessionEntity {
       const item = this.character.backpack.getItem(index);
       if (item) {
         this.character.useItem(item);
-        this.state = EGameState.Game;
+        this.logMessages.push('Item used');
       } else {
         this.logMessages = [`Wrong input`];
       }
@@ -162,8 +172,10 @@ export class GameSessionEntity implements IGameSessionEntity {
   }
 
   dropBackpackItem(input: string) {
+    if (this.state !== EGameState.Backpack) return;
+
     const index = Number(input) - 1;
-    const item = this.character.backpack.removeItem(index);
+    const item = this.character.backpack.getItem(index);
     if (item) {
       this.character.dropItem(item);
       this.logMessages = [`Dropped ${item.type} ${item.subtype}`];

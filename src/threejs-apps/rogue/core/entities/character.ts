@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CharacterStats } from '../../config/game.config';
 import { IBackpackEntity, ICharacterEntity, IItemEntity, IPosition } from '../../types/entities';
 import { getProbabilityResult, isSamePosition } from '../../utils/utils';
@@ -15,9 +14,10 @@ export class CharacterEntity implements ICharacterEntity {
   backpack: IBackpackEntity;
   weapon: IItemEntity;
   gold: number;
+  isAttacking: boolean;
+  attackDirection: 'up' | 'down' | 'left' | 'right' | null;
 
   constructor() {
-    // Temporary position - will be set properly when level is created
     this.position = {
       room: null,
       y: 0,
@@ -29,8 +29,13 @@ export class CharacterEntity implements ICharacterEntity {
     this.hp = 0;
     this.dex = 0;
     this.str = 0;
-    this.weapon = null as any;
+    // Initialize weapon with temporary values, will be properly set in reset()
+    const tempWeapon = new ItemEntity(this.position);
+    tempWeapon.setBySubtype('weapon', 'knife');
+    this.weapon = tempWeapon;
     this.gold = 0;
+    this.isAttacking = false;
+    this.attackDirection = null;
     this.reset();
   }
 
@@ -58,13 +63,15 @@ export class CharacterEntity implements ICharacterEntity {
       if (enemy) {
         this.attack(enemy);
       } else if (room.corridor.up && y + 1 === room.corridor.up.start.y && x === room.corridor.up.start.x) {
+        const newRoom = room.corridor.up.end.room;
         this.position = {
-          room: room.corridor.up.end.room,
+          room: newRoom,
           y: room.corridor.up.end.y + 1,
           x: room.corridor.up.end.x,
           z: 0,
         };
         room.isSeen = true;
+        newRoom.isSeen = true;
         room.level.gameSession.logMessages.push(`Move to the next room`);
         room.level.gameSession.statistics.travelledDistance++;
       } else if (y < room.sizeY - 1) {
@@ -81,13 +88,15 @@ export class CharacterEntity implements ICharacterEntity {
       if (enemy) {
         this.attack(enemy);
       } else if (room.corridor.right && x + 1 === room.corridor.right.start.x && y === room.corridor.right.start.y) {
+        const newRoom = room.corridor.right.end.room;
         this.position = {
-          room: room.corridor.right.end.room,
+          room: newRoom,
           y: room.corridor.right.end.y,
           x: room.corridor.right.end.x + 1,
           z: 0,
         };
         room.isSeen = true;
+        newRoom.isSeen = true;
         room.level.gameSession.logMessages.push(`Move to the next room`);
         room.level.gameSession.statistics.travelledDistance++;
       } else if (x < room.sizeX - 1) {
@@ -104,13 +113,15 @@ export class CharacterEntity implements ICharacterEntity {
       if (enemy) {
         this.attack(enemy);
       } else if (room.corridor.down && y - 1 === room.corridor.down.start.y && x === room.corridor.down.start.x) {
+        const newRoom = room.corridor.down.end.room;
         this.position = {
-          room: room.corridor.down.end.room,
+          room: newRoom,
           y: room.corridor.down.end.y - 1,
           x: room.corridor.down.end.x,
           z: 0,
         };
         room.isSeen = true;
+        newRoom.isSeen = true;
         room.level.gameSession.logMessages.push(`Move to the next room`);
         room.level.gameSession.statistics.travelledDistance++;
       } else if (y > 0) {
@@ -127,13 +138,15 @@ export class CharacterEntity implements ICharacterEntity {
       if (enemy) {
         this.attack(enemy);
       } else if (room.corridor.left && x - 1 === room.corridor.left.start.x && y === room.corridor.left.start.y) {
+        const newRoom = room.corridor.left.end.room;
         this.position = {
-          room: room.corridor.left.end.room,
+          room: newRoom,
           y: room.corridor.left.end.y,
           x: room.corridor.left.end.x - 1,
           z: 0,
         };
         room.isSeen = true;
+        newRoom.isSeen = true;
         room.level.gameSession.logMessages.push(`Move to the next room`);
         room.level.gameSession.statistics.travelledDistance++;
       } else if (x > 0) {
@@ -150,6 +163,21 @@ export class CharacterEntity implements ICharacterEntity {
     const { room } = this.position;
     if (!room) return;
 
+    const dx = enemy.position.x - this.position.x;
+    const dy = enemy.position.y - this.position.y;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      this.attackDirection = dx > 0 ? 'right' : 'left';
+    } else {
+      this.attackDirection = dy > 0 ? 'up' : 'down';
+    }
+
+    this.isAttacking = true;
+    setTimeout(() => {
+      this.isAttacking = false;
+      this.attackDirection = null;
+    }, 200);
+
     const isHit = getProbabilityResult(this.dex / 4);
     if (isHit) {
       const damage = this.str + (this.weapon.strengthUp || 0);
@@ -162,7 +190,6 @@ export class CharacterEntity implements ICharacterEntity {
   }
 
   pickItemIfAvailable(): void {
-    // Find all items at character's position
     const { room } = this.position;
     if (!room) return;
 
@@ -173,7 +200,6 @@ export class CharacterEntity implements ICharacterEntity {
     let backpackFullEncountered = false;
     const pickedItems: IItemEntity[] = [];
 
-    // Try to pick up each item
     for (const item of itemsAtPosition) {
       let isPut;
       if (item.subtype === 'gold') {
@@ -193,12 +219,10 @@ export class CharacterEntity implements ICharacterEntity {
       }
     }
 
-    // Remove picked items from level.items
     room.level.items = room.level.items.filter(
       (item) => !pickedItems.includes(item)
     );
 
-    // Show backpack full message once if any item couldn't be picked
     if (backpackFullEncountered) {
       room.level.gameSession.logMessages.push(`Backpack is full. Some items left behind.`);
     }

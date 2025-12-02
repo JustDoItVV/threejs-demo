@@ -64,7 +64,6 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
 
   const wallHeight = 1.0;
   const wallThickness = 0.15;
-  const cornerSize = wallThickness;
 
   const opacity = disableFog ? 1.0 : room.isSeen ? 1.0 : 0.3;
   const MaterialComponent = useBasicMaterial ? 'meshBasicMaterial' : 'meshLambertMaterial';
@@ -102,11 +101,7 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
 
       {/* North Wall */}
       <mesh
-        position={[
-          centerX - TILE_SIZE / 2,
-          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
-          wallHeight / 2,
-        ]}
+        position={[centerX - TILE_SIZE / 2, room.fieldY - wallThickness / 2 - TILE_SIZE / 2, 0]}
         rotation={[Math.PI / 16, 0, 0]}
         castShadow
       >
@@ -158,59 +153,6 @@ export function RoomMesh({ room, useBasicMaterial = false, disableFog = false }:
           <boxGeometry args={[wallThickness, room.sizeY, wallHeight]} />
           {wallMaterial}
         </mesh>
-      </mesh>
-
-      {/* Corner Blocks - prevent wall intersections */}
-      {/* Northwest Corner */}
-      <mesh
-        position={[
-          room.fieldX - wallThickness / 2 - TILE_SIZE / 2,
-          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
-          wallHeight / 2,
-        ]}
-        castShadow
-      >
-        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
-        {wallMaterial}
-      </mesh>
-
-      {/* Northeast Corner */}
-      <mesh
-        position={[
-          room.fieldX + room.sizeX + wallThickness / 2 - TILE_SIZE / 2,
-          room.fieldY - wallThickness / 2 - TILE_SIZE / 2,
-          wallHeight / 2,
-        ]}
-        castShadow
-      >
-        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
-        {wallMaterial}
-      </mesh>
-
-      {/* Southwest Corner */}
-      <mesh
-        position={[
-          room.fieldX - wallThickness / 2 - TILE_SIZE / 2,
-          room.fieldY + room.sizeY + wallThickness / 2 - TILE_SIZE / 2,
-          wallHeight / 2,
-        ]}
-        castShadow
-      >
-        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
-        {wallMaterial}
-      </mesh>
-
-      {/* Southeast Corner */}
-      <mesh
-        position={[
-          room.fieldX + room.sizeX + wallThickness / 2 - TILE_SIZE / 2,
-          room.fieldY + room.sizeY + wallThickness / 2 - TILE_SIZE / 2,
-          wallHeight / 2,
-        ]}
-        castShadow
-      >
-        <boxGeometry args={[cornerSize, cornerSize, wallHeight]} />
-        {wallMaterial}
       </mesh>
     </group>
   );

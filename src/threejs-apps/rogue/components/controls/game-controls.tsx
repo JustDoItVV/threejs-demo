@@ -17,9 +17,21 @@ export function GameControls() {
   const lastMoveTimeRef = useRef<number>(0);
   const initialDelayPassedRef = useRef<boolean>(false);
 
+  // Prevent page scroll on arrow keys and WASD
+  useEffect(() => {
+    const preventScroll = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', preventScroll);
+    return () => window.removeEventListener('keydown', preventScroll);
+  }, []);
+
   useFrame(() => {
     const controls = get();
-    const { makeTurn, controller, restart } = useStore.getState();
+    const { makeTurn, controller } = useStore.getState();
     const gameState = controller?.getStatuses().gameState;
 
     if (gameState !== EGameState.Game) {
@@ -53,11 +65,6 @@ export function GameControls() {
       makeTurn('right');
       moved = true;
     }
-    if (controls.backpack) {
-    }
-    if (controls.restart) {
-      restart();
-    }
 
     if (moved) {
       lastMoveTimeRef.current = now;
@@ -68,6 +75,51 @@ export function GameControls() {
   });
 
   useEffect(() => {
+    const unsubEnter = sub(
+      (state) => state.enter,
+      (pressed) => {
+        if (!pressed) return;
+        const { controller, startGame, restart } = useStore.getState();
+        const gameState = controller?.getStatuses().gameState;
+
+        if (gameState === EGameState.Start) {
+          startGame();
+        } else if (gameState === EGameState.End) {
+          restart();
+        }
+      }
+    );
+
+    const unsubBackpack = sub(
+      (state) => state.backpack,
+      (pressed) => {
+        if (!pressed) return;
+        const { controller, makeTurn, closeBackpack } = useStore.getState();
+        const gameState = controller?.getStatuses().gameState;
+
+        if (gameState === EGameState.Game) {
+          makeTurn('b');
+        } else if (gameState === EGameState.Backpack) {
+          closeBackpack();
+        }
+      }
+    );
+
+    const unsubEscape = sub(
+      (state) => state.escape,
+      async (pressed) => {
+        if (!pressed) return;
+        const { controller, exitToMenu, closeBackpack } = useStore.getState();
+        const gameState = controller?.getStatuses().gameState;
+
+        if (gameState === EGameState.Game) {
+          await exitToMenu();
+        } else if (gameState === EGameState.Backpack) {
+          closeBackpack();
+        }
+      }
+    );
+
     const unsubRestart = sub(
       (state) => state.restart,
       (pressed) => {
@@ -80,8 +132,28 @@ export function GameControls() {
       }
     );
 
+    const digitHandlers = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => {
+      const controlKey = `digit${digit}` as EControls;
+      return sub(
+        (state) => state[controlKey],
+        (pressed) => {
+          if (!pressed) return;
+          const { controller, makeTurn } = useStore.getState();
+          const gameState = controller?.getStatuses().gameState;
+
+          if (gameState === EGameState.Backpack) {
+            makeTurn(String(digit));
+          }
+        }
+      );
+    });
+
     return () => {
+      unsubEnter();
+      unsubBackpack();
+      unsubEscape();
       unsubRestart();
+      digitHandlers.forEach((unsub) => unsub());
     };
   }, [sub]);
 

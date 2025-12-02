@@ -6,16 +6,16 @@ import { useState } from 'react';
 import { Button } from '@/ui/button';
 
 import { selectController, selectRenderTrigger, useStore } from '../../store';
-import { EGameState, Item } from '../../types/game-types';
+import { Item } from '../../types/game-types';
 import { getItemSpritePath } from '../../utils/utils';
 
 export function BackpackModal() {
   const [filter, setFilter] = useState<string>('all');
   useStore(selectRenderTrigger);
   const controller = useStore(selectController);
-  const statuses = controller?.getStatuses();
   const character = controller?.getEntitiesToRender().character;
   const makeTurn = useStore((state) => state.makeTurn);
+  const closeBackpack = useStore((state) => state.closeBackpack);
   const updateDebugInfo = useStore((state) => state.updateDebugOnModel);
   const triggerRender = useStore((state) => state._triggerRender);
 
@@ -28,26 +28,47 @@ export function BackpackModal() {
       : itemsWithIndices.filter(({ item }) => item && item.type === filter)
   ) as { originalIndex: number; item: Item }[];
 
-  const handleUseItem = (originalIndex: number) => {
-    if (!controller) return;
-    makeTurn(`${originalIndex + 1}`);
-    controller.model.gameSession.state = EGameState.Game;
+  const handleUseItem = (filteredIndex: number) => {
+    if (!controller || !character?.backpack) return;
+
+    const filterType = filter === 'all' ? 'any' : filter;
+
+    useStore.setState((state) => {
+      if (state.controller?.model?.gameSession?.character?.backpack) {
+        state.controller.model.gameSession.character.backpack.filter = filterType;
+      }
+      return state;
+    });
+
+    const command = `${filteredIndex + 1}`;
+    makeTurn(command);
+
     updateDebugInfo();
     triggerRender();
   };
 
-  const handleDropItem = (originalIndex: number, event: React.MouseEvent) => {
+  const handleDropItem = (filteredIndex: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    makeTurn(`d${originalIndex + 1}`);
+    if (!controller || !character?.backpack) return;
+
+    const filterType = filter === 'all' ? 'any' : filter;
+
+    useStore.setState((state) => {
+      if (state.controller?.model?.gameSession?.character?.backpack) {
+        state.controller.model.gameSession.character.backpack.filter = filterType;
+      }
+      return state;
+    });
+
+    const command = `d${filteredIndex + 1}`;
+    makeTurn(command);
+
     updateDebugInfo();
     triggerRender();
   };
 
   const handleCloseButtonClick = () => {
-    if (!controller) return;
-    controller.model.gameSession.state = EGameState.Game;
-    updateDebugInfo();
-    triggerRender();
+    closeBackpack();
   };
 
   return (
@@ -60,46 +81,52 @@ export function BackpackModal() {
           </Button>
         </div>
 
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={filter === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('all')}
-          >
-            All
-          </Button>
-          <Button
-            variant={filter === 'weapon' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('weapon')}
-          >
-            Weapons
-          </Button>
-          <Button
-            variant={filter === 'food' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('food')}
-          >
-            Food
-          </Button>
-          <Button
-            variant={filter === 'elixir' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('elixir')}
-          >
-            Elixirs
-          </Button>
-          <Button
-            variant={filter === 'scroll' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('scroll')}
-          >
-            Scrolls
-          </Button>
+        <div className="mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={filter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('all')}
+            >
+              All
+            </Button>
+            <Button
+              variant={filter === 'weapon' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('weapon')}
+            >
+              Weapons
+            </Button>
+            <Button
+              variant={filter === 'food' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('food')}
+            >
+              Food
+            </Button>
+            <Button
+              variant={filter === 'elixir' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('elixir')}
+            >
+              Elixirs
+            </Button>
+            <Button
+              variant={filter === 'scroll' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('scroll')}
+            >
+              Scrolls
+            </Button>
+          </div>
+          <div className="mt-2 text-xs text-gray-400 font-mono">
+            Keyboard: Press <span className="text-yellow-400">1-9</span> to use item,{' '}
+            <span className="text-red-400">d1-d9</span> to drop
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {filteredItems.map(({ item, originalIndex }) => {
+          {filteredItems.map(({ item, originalIndex }, filteredIndex) => {
             if (!item) {
               return (
                 <div
@@ -122,7 +149,6 @@ export function BackpackModal() {
                 ? 'text-blue-400'
                 : 'text-yellow-400';
 
-            // Get item sprite path using hash-based variant
             const itemSpritePath = getItemSpritePath(item);
 
             return (
@@ -152,6 +178,9 @@ export function BackpackModal() {
                     </div>
                     <div className="text-xs text-gray-400 capitalize">Type: {item.type}</div>
                     <div className="flex flex-wrap gap-1">
+                      {item.type === 'treasure' && item.cost > 0 && (
+                        <div className="text-xs text-yellow-400">Value: {item.cost} gold</div>
+                      )}
                       {item.strengthUp && (
                         <div className="text-xs text-orange-400">+{item.strengthUp} STR</div>
                       )}
@@ -173,18 +202,18 @@ export function BackpackModal() {
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={() => handleUseItem(originalIndex)}
+                    onClick={() => handleUseItem(filteredIndex)}
                     className="flex-1 h-7 text-xs bg-green-700 hover:bg-green-600"
                   >
-                    Use ({originalIndex + 1})
+                    Use ({filteredIndex + 1})
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => handleDropItem(originalIndex, e)}
+                    onClick={(e) => handleDropItem(filteredIndex, e)}
                     className="flex-1 h-7 text-xs border-red-600 text-red-400 hover:bg-red-900/30"
                   >
-                    Drop (d{originalIndex + 1})
+                    Drop (d{filteredIndex + 1})
                   </Button>
                 </div>
               </div>

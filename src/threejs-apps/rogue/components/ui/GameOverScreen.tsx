@@ -33,6 +33,12 @@ export function GameOverScreen() {
         <div className="bg-black/60 rounded p-4 mb-6">
           <h2 className="text-xl font-bold mb-3 text-yellow-400 text-center">Final Stats</h2>
           <div className="flex flex-col gap-2 font-mono text-sm">
+            <div className="flex justify-between border-b border-yellow-600/30 pb-2 mb-2">
+              <span className="text-yellow-300 font-bold">Total Score:</span>
+              <span className="text-yellow-400 font-bold text-lg">
+                {controller?.model?.gameSession?.getTotalScore() || 0} pts
+              </span>
+            </div>
             <div className="flex justify-between">
               <span>Level Reached:</span>
               <span className="text-yellow-400 font-bold">{levelNumber}</span>
@@ -40,6 +46,12 @@ export function GameOverScreen() {
             <div className="flex justify-between">
               <span>Gold Collected:</span>
               <span className="text-yellow-400 font-bold">{character?.gold || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Enemies Killed:</span>
+              <span className="text-red-400 font-bold">
+                {controller?.model?.gameSession?.statistics.enemiesKilled || 0}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Final HP:</span>

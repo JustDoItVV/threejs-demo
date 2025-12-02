@@ -15,6 +15,8 @@ export function PlayerCamera() {
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
   const { size: viewportSize } = useThree();
   const viewMode = useStore((state) => state.viewMode);
+  const enableFreeCameraControl = useStore((state) => state.enableFreeCameraControl);
+  const prevFreeCameraControl = useRef(false);
 
   useEffect(() => {
     const camera = cameraRef.current;
@@ -31,6 +33,18 @@ export function PlayerCamera() {
     camera.bottom = height / -2;
     camera.updateProjectionMatrix();
   }, [viewportSize.width, viewportSize.height, viewMode]);
+
+  useEffect(() => {
+    if (enableFreeCameraControl && !prevFreeCameraControl.current) {
+      const playerPos = useStore.getState().controller?.model?.gameSession?.character.position;
+      if (playerPos) {
+        const worldX = (playerPos.room?.fieldX ?? 0) + playerPos.x;
+        const worldY = (playerPos.room?.fieldY ?? 0) + playerPos.y;
+        currentLookAtRef.current.set(worldX, worldY, playerPos.z);
+      }
+    }
+    prevFreeCameraControl.current = enableFreeCameraControl;
+  }, [enableFreeCameraControl]);
 
   useFrame(() => {
     const camera = cameraRef.current;

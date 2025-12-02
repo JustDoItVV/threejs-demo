@@ -25,6 +25,8 @@ export function DebugPanel() {
     toggleFog,
     showGrid,
     toggleGrid,
+    showMarkers,
+    disableFog,
   } = useStore(selectDebugSlice);
 
   const handleZoomChange = (newZoom: number) => setCameraZoom(newZoom);
@@ -123,43 +125,55 @@ export function DebugPanel() {
               <div className="flex flex-col gap-1">
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={showMarkers ? 'default' : 'outline'}
                   onClick={toggleMarkers}
-                  className="w-full h-7 text-xs border-green-500/50 bg-green-900/20 hover:bg-green-800/30 text-gray-100"
+                  className={cn(
+                    'w-full h-7 text-xs text-gray-100',
+                    showMarkers
+                      ? 'bg-green-600 hover:bg-green-700 border-green-500'
+                      : 'border-green-500/50 bg-green-900/20 hover:bg-green-800/30'
+                  )}
                 >
-                  Toggle Debug Markers
+                  Debug Markers: {showMarkers ? 'ON' : 'OFF'}
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={!disableFog ? 'default' : 'outline'}
                   onClick={toggleFog}
-                  className="w-full h-7 text-xs border-green-500/50 bg-green-900/20 hover:bg-green-800/30 text-gray-100"
+                  className={cn(
+                    'w-full h-7 text-xs text-gray-100',
+                    !disableFog
+                      ? 'bg-green-600 hover:bg-green-700 border-green-500'
+                      : 'border-green-500/50 bg-green-900/20 hover:bg-green-800/30'
+                  )}
                 >
-                  Toggle Fog of War
+                  Fog of War: {disableFog ? 'OFF' : 'ON'}
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={showGrid ? 'default' : 'outline'}
                   onClick={toggleGrid}
                   className={cn(
-                    'w-full h-7 text-xs border-green-500/50  hover:bg-green-800/30 text-gray-100',
-                    showGrid && 'bg-green-500/50',
-                    !showGrid && 'bg-green-900/20'
+                    'w-full h-7 text-xs text-gray-100',
+                    showGrid
+                      ? 'bg-green-600 hover:bg-green-700 border-green-500'
+                      : 'border-green-500/50 bg-green-900/20 hover:bg-green-800/30'
                   )}
                 >
-                  Toggle grid
+                  Grid: {showGrid ? 'ON' : 'OFF'}
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={enableFreeCameraControl ? 'default' : 'outline'}
                   onClick={toggleFreeCameraControl}
                   className={cn(
-                    'w-full h-7 text-xs border-green-500/50  hover:bg-green-800/30 text-gray-100',
-                    enableFreeCameraControl && 'bg-green-500/50',
-                    !enableFreeCameraControl && 'bg-green-900/20'
+                    'w-full h-7 text-xs text-gray-100',
+                    enableFreeCameraControl
+                      ? 'bg-green-600 hover:bg-green-700 border-green-500'
+                      : 'border-green-500/50 bg-green-900/20 hover:bg-green-800/30'
                   )}
                 >
-                  Enable free camera
+                  Free Camera: {enableFreeCameraControl ? 'ON' : 'OFF'}
                 </Button>
               </div>
             </div>

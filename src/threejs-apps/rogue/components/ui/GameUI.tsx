@@ -8,6 +8,7 @@ import { DebugPanel } from './DebugPanel';
 import { GameOverScreen } from './GameOverScreen';
 import { LogBox } from './LogBox';
 import { MenuScreen } from './MenuScreen';
+import { PerformanceStats } from './PerformanceStats';
 import { StatusBar } from './StatusBar';
 
 export function GameUI() {
@@ -26,6 +27,7 @@ export function GameUI() {
           <StatusBar />
           <LogBox />
           <DebugPanel />
+          <PerformanceStats />
         </>
       )}
 
