@@ -22,9 +22,8 @@ const AnimatedScene = dynamic(
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
-const ProductShowcase = dynamic(
-  () =>
-    import('../../threejs-apps/product-showcase').then((mod) => ({ default: mod.ProductShowcase })),
+const ModelViewer = dynamic(
+  () => import('../../threejs-apps/3d-model-viewer').then((mod) => ({ default: mod.ModelViewer })),
   { ssr: false, loading: () => <LoadingCanvas /> }
 );
 
@@ -55,8 +54,8 @@ export function ProjectCanvas({ slug }: ProjectCanvasProps) {
             return <BlockchainCityVisualization />;
           case 'animated-scene':
             return <AnimatedScene />;
-          case 'product-showcase':
-            return <ProductShowcase />;
+          case '3d-model-viewer':
+            return <ModelViewer />;
           case 'froggy-road':
             return <FroggyRoad />;
           case 'rogue':
