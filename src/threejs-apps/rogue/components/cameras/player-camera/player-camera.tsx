@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import { useStore } from '@/threejs-apps/rogue/store';
 import { OrthographicCamera } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 
 const CAMERA_OFFSET = new THREE.Vector3(0, -4, 25);
 
@@ -13,11 +13,24 @@ export function PlayerCamera() {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const currentPosRef = useRef(CAMERA_OFFSET);
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
+  const { size: viewportSize } = useThree();
+  const viewMode = useStore((state) => state.viewMode);
 
-  const size = 300;
-  const viewRatio = window.innerWidth / window.innerHeight;
-  const width = viewRatio < 1 ? size : size * viewRatio;
-  const height = viewRatio < 1 ? size / viewRatio : size;
+  useEffect(() => {
+    const camera = cameraRef.current;
+    if (!camera) return;
+
+    const baseSize = 300;
+    const viewRatio = viewportSize.width / viewportSize.height;
+    const width = viewRatio < 1 ? baseSize : baseSize * viewRatio;
+    const height = viewRatio < 1 ? baseSize / viewRatio : baseSize;
+
+    camera.left = width / -2;
+    camera.right = width / 2;
+    camera.top = height / 2;
+    camera.bottom = height / -2;
+    camera.updateProjectionMatrix();
+  }, [viewportSize.width, viewportSize.height, viewMode]);
 
   useFrame(() => {
     const camera = cameraRef.current;
@@ -59,10 +72,6 @@ export function PlayerCamera() {
       <OrthographicCamera
         ref={cameraRef}
         makeDefault
-        left={width / -2}
-        right={width / 2}
-        top={height / 2}
-        bottom={height / -2}
         near={0.1}
         far={1000}
         up={[0, 0, 1]}

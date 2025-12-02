@@ -26,6 +26,11 @@ export const createAppSlice: StateCreator<
     const { viewMode } = get();
     if (viewMode === EViewMode.Fullwindow) {
       set({ viewMode: EViewMode.Normal });
+    } else if (viewMode === EViewMode.Fullscreen) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      set({ viewMode: EViewMode.Fullwindow });
     } else {
       set({ viewMode: EViewMode.Fullwindow });
     }
