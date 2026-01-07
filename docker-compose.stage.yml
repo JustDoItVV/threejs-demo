@@ -1,10 +1,24 @@
-version: "3.8"
+# Three.js Demo для Stage
+# Security: non-root user, resource limits, no-new-privileges
 
 services:
   threejs-demo:
     image: ${REGISTRY}/${REPO_OWNER}/threejs-demo:${IMAGE_TAG}
     container_name: threejs-demo-stage
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32M,mode=1777
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.2"
+        reservations:
+          memory: 64M
+          cpus: "0.05"
     environment:
       NODE_ENV: production
       PORT: 5000

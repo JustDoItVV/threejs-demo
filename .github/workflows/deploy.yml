@@ -66,22 +66,22 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.STAGE_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ vars.STAGE_SERVER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 49152 -H ${{ vars.STAGE_SERVER_HOST }} >> ~/.ssh/known_hosts
 
       - name: Create deployment directory on server
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             mkdir -p ${{ vars.STAGE_DEPLOY_PATH }}
           EOF
 
       - name: Copy docker-compose file to server
         run: |
-          scp -i ~/.ssh/deploy_key docker-compose.stage.yml \
+          scp -P 49152 -i ~/.ssh/deploy_key docker-compose.stage.yml \
             ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }}:${{ vars.STAGE_DEPLOY_PATH }}/
 
       - name: Create .env file on server
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             cat > ${{ vars.STAGE_DEPLOY_PATH }}/.env << 'ENVEOF'
           REGISTRY=${{ env.REGISTRY }}
           REPO_OWNER=${{ needs.build-and-push.outputs.repo_owner_lc }}
@@ -93,20 +93,20 @@ jobs:
 
       - name: Login to GHCR on server
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           EOF
 
       - name: Pull Docker image
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             cd ${{ vars.STAGE_DEPLOY_PATH }}
             docker compose -f docker-compose.stage.yml --env-file .env pull
           EOF
 
       - name: Deploy application
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             cd ${{ vars.STAGE_DEPLOY_PATH }}
             docker compose -f docker-compose.stage.yml --env-file .env up -d
           EOF
@@ -116,7 +116,7 @@ jobs:
 
       - name: Health check with auto-rollback
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             cd ${{ vars.STAGE_DEPLOY_PATH }}
 
             # Health check function
@@ -141,7 +141,7 @@ jobs:
 
       - name: Verify deployment
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             echo "=== Docker container status ==="
             docker ps --filter "name=threejs-demo-stage" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
@@ -152,7 +152,7 @@ jobs:
       - name: Cleanup old Docker images
         if: success()
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
             echo "=== Removing old images ==="
             docker images ${{ env.REGISTRY }}/${{ needs.build-and-push.outputs.repo_owner_lc }}/threejs-demo --format "{{.ID}}" | tail -n +3 | xargs -r docker rmi -f 2>/dev/null || true
           EOF

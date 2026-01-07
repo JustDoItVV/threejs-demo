@@ -1,30 +1,44 @@
+# ==============================================================================
+# Three.js Demo Application
+# Security: non-root user, multi-stage build
+# ==============================================================================
 FROM node:20-alpine AS builder
 
-WORKDIR /usr/apps/threejs-demo
+WORKDIR /app
 
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
 
 COPY package*.json ./
-
 RUN npm ci --production=false
 
 COPY . .
-
 RUN NODE_ENV=production npm run build
 
+# ==============================================================================
+# Production image
+# ==============================================================================
 FROM node:20-alpine AS runner
 
-WORKDIR /usr/apps/threejs-demo
+WORKDIR /app
 
+# Установка wget для healthcheck
 RUN apk add --no-cache wget
 
-COPY --from=builder /usr/apps/threejs-demo/.next/standalone ./
-COPY --from=builder /usr/apps/threejs-demo/.next/static ./.next/static
-COPY --from=builder /usr/apps/threejs-demo/public ./public
+# Создаём non-root пользователя для безопасности
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
 
-COPY start.sh ./
+# Копируем собранное приложение с правильным владельцем
+COPY --from=builder --chown=nodejs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nodejs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nodejs:nodejs /app/public ./public
+COPY --from=builder --chown=nodejs:nodejs /app/start.sh ./
+
 RUN chmod +x start.sh
+
+# Переключаемся на non-root пользователя
+USER nodejs
 
 ENV PORT=5000
 ENV HOSTNAME="0.0.0.0"
