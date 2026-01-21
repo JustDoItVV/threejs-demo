@@ -64,47 +64,47 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.STAGE_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 49152 -H ${{ vars.STAGE_SERVER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 49152 -H ${{ secrets.STAGE_SERVER_HOST }} >> ~/.ssh/known_hosts
 
       - name: Create deployment directory on server
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            mkdir -p ${{ vars.STAGE_DEPLOY_PATH }}
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
+            mkdir -p ${{ secrets.STAGE_DEPLOY_PATH }}
           EOF
 
       - name: Copy docker-compose file to server
         run: |
           scp -P 49152 -i ~/.ssh/deploy_key docker-compose.stage.yml \
-            ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }}:${{ vars.STAGE_DEPLOY_PATH }}/
+            ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }}:${{ secrets.STAGE_DEPLOY_PATH }}/
 
       - name: Create .env file on server
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            cat > ${{ vars.STAGE_DEPLOY_PATH }}/.env << 'ENVEOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
+            cat > ${{ secrets.STAGE_DEPLOY_PATH }}/.env << 'ENVEOF'
           REGISTRY=${{ env.REGISTRY }}
           REPO_OWNER=${{ needs.build-and-push.outputs.repo_owner_lc }}
           IMAGE_TAG=stage-${{ github.sha }}
-          STAGE_DOMAIN=${{ vars.STAGE_DOMAIN }}
+          STAGE_DOMAIN=${{ secrets.STAGE_DOMAIN }}
           BASE_PATH=${{ vars.BASE_PATH }}
           ENVEOF
           EOF
 
       - name: Login to GHCR on server
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} \
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} \
             "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin" 2>/dev/null
 
       - name: Pull Docker image
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            cd ${{ vars.STAGE_DEPLOY_PATH }}
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ secrets.STAGE_DEPLOY_PATH }}
             docker compose -f docker-compose.stage.yml --env-file .env pull
           EOF
 
       - name: Deploy application
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            cd ${{ vars.STAGE_DEPLOY_PATH }}
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ secrets.STAGE_DEPLOY_PATH }}
             docker compose -f docker-compose.stage.yml --env-file .env up -d
           EOF
 
@@ -113,13 +113,13 @@ jobs:
 
       - name: Health check with auto-rollback
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            cd ${{ vars.STAGE_DEPLOY_PATH }}
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
+            cd ${{ secrets.STAGE_DEPLOY_PATH }}
 
             # Health check function
             check_health() {
-              curl -k -f https://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
-              curl -f http://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
+              curl -k -f https://${{ secrets.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
+              curl -f http://${{ secrets.STAGE_DOMAIN }}/threejs-demo/api/health 2>/dev/null || \
               echo "failed"
             }
 
@@ -138,18 +138,18 @@ jobs:
 
       - name: Verify deployment
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
             echo "=== Docker container status ==="
             docker ps --filter "name=threejs-demo-stage" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
             echo -e "\n=== Health check result ==="
-            curl -k -s https://${{ vars.STAGE_DOMAIN }}/threejs-demo/api/health || echo "Failed"
+            curl -k -s https://${{ secrets.STAGE_DOMAIN }}/threejs-demo/api/health || echo "Failed"
           EOF
 
       - name: Cleanup old Docker images
         if: success()
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ secrets.STAGE_SERVER_USER }}@${{ secrets.STAGE_SERVER_HOST }} << 'EOF'
             echo "=== Removing old images ==="
             docker images ${{ env.REGISTRY }}/${{ needs.build-and-push.outputs.repo_owner_lc }}/threejs-demo --format "{{.ID}}" | tail -n +3 | xargs -r docker rmi -f 2>/dev/null || true
           EOF
