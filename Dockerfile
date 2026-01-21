@@ -2,7 +2,7 @@
 # Three.js Demo Application
 # Security: non-root user, multi-stage build
 # ==============================================================================
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN NODE_ENV=production npm run build
 # ==============================================================================
 # Production image
 # ==============================================================================
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 
