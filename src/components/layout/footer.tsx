@@ -10,7 +10,7 @@ export function Footer() {
     <footer className="mt-auto border-t">
       <div className="container flex flex-col md:flex-row items-center justify-between gap-4 py-8">
         <p className="text-sm text-muted-foreground">
-          © {currentYear} Three.js Demo. Built with Next.js & shadcn/ui.
+          © 2025–{currentYear} Three.js Demo. Built with Next.js & shadcn/ui.
         </p>
 
         <Link
