@@ -49,8 +49,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner_lc }}/threejs-demo:stage-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner_lc }}/threejs-demo:stage-latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to Stage server
