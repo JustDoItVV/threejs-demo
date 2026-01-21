@@ -1,0 +1,62 @@
+name: Security Audit
+
+on:
+  push:
+    branches: ['master', 'main']
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: ['master', 'main']
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    name: NPM Dependencies Audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run npm audit
+        run: |
+          echo "## Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if npm audit --audit-level=moderate 2>&1 | tee audit-output.txt; then
+            echo "✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Vulnerabilities Found" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat audit-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Please review and update dependencies.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

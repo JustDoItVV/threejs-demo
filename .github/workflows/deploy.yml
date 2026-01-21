@@ -93,9 +93,8 @@ jobs:
 
       - name: Login to GHCR on server
         run: |
-          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} << 'EOF'
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-          EOF
+          ssh -p 49152 -i ~/.ssh/deploy_key ${{ vars.STAGE_SERVER_USER }}@${{ vars.STAGE_SERVER_HOST }} \
+            "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin" 2>/dev/null
 
       - name: Pull Docker image
         run: |
