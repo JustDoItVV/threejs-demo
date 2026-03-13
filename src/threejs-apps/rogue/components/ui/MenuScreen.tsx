@@ -31,7 +31,7 @@ export function MenuScreen() {
 
     const savedName = datalayer.loadPlayerName();
     if (savedName) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setPlayerName(savedName);
     }
 

@@ -11,7 +11,7 @@ interface ParticlesProps {
 
 export function Particles({ count = 1000 }: ParticlesProps) {
   const pointsRef = useRef<THREE.Points>(null);
-  // eslint-disable-next-line react-hooks/purity
+   
   const seedRef = useRef(Math.random() * 1000);
 
   const { positions, colors } = useMemo(() => {
